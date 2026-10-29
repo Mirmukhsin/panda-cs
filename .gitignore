@@ -1,0 +1,39 @@
+# Build targets
+target/
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Environment & credentials
+.env
+.env.*
+*.local
+
+# IDE & Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+**/out/
+.vscode/
+.classpath
+.project
+.settings/
+.apt_generated/
+.factorypath
+.springBeans
+.sts4-cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp

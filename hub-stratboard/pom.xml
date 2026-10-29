@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.cs2hub</groupId>
+        <artifactId>cs2-superhub</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>hub-stratboard</artifactId>
+    <name>hub-stratboard</name>
+    <description>Interactive CS2 Tactical Stratboard, Grenade Lineups, and Playbooks module</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.cs2hub</groupId>
+            <artifactId>hub-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

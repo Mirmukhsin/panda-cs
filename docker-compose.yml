@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cs2hub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cs2hub
+      POSTGRES_USER: cs2admin
+      POSTGRES_PASSWORD: cs2password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cs2admin -d cs2hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: cs2hub_postgres_data
