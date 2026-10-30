@@ -53,6 +53,8 @@ public class SecurityConfig {
                         ).permitAll()
                         // Public GET endpoints for minigames & loadout previews
                         .requestMatchers(HttpMethod.GET, "/api/v1/minigames/**").permitAll()
+                        // Public daily guess endpoint for zero-friction play (supports guest session header)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/minigames/daily/guess").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/loadouts/**").permitAll()
                         // User profile rules: /me requires authentication, /api/v1/users/{userId} is public
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()

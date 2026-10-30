@@ -4,10 +4,13 @@ import com.cs2hub.common.dto.ApiResponseDto;
 import com.cs2hub.common.security.AuthenticatedUser;
 import com.cs2hub.common.spi.UserSummaryDto;
 import com.cs2hub.minigames.domain.ClipStatus;
+import com.cs2hub.minigames.domain.DailyChallengeEntity;
 import com.cs2hub.minigames.domain.VideoProvider;
 import com.cs2hub.minigames.dto.ClipSubmissionResponseDto;
+import com.cs2hub.minigames.dto.DailyChallengeResponseDto;
 import com.cs2hub.minigames.dto.ReviewClipRequestDto;
 import com.cs2hub.minigames.service.ClipService;
+import com.cs2hub.minigames.service.DailyChallengeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +22,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,11 +38,14 @@ class AdminClipControllerTest {
     @Mock
     private ClipService clipService;
 
+    @Mock
+    private DailyChallengeService dailyChallengeService;
+
     private AdminClipController adminClipController;
 
     @BeforeEach
     void setUp() {
-        adminClipController = new AdminClipController(clipService);
+        adminClipController = new AdminClipController(clipService, dailyChallengeService);
     }
 
     @Test
@@ -114,5 +123,27 @@ class AdminClipControllerTest {
         assertThatThrownBy(() -> adminClipController.reviewClip(regularUser, clipId, request))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("Administrative privileges required");
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/minigames/admin/daily/generate should succeed for ADMIN user")
+    void shouldGenerateDailyChallengeForAdmin() {
+        UUID adminId = UUID.randomUUID();
+        AuthenticatedUser adminUser = new AuthenticatedUser(adminId, "76561198000000999", "admin_lead", "ADMIN");
+
+        DailyChallengeEntity challenge = DailyChallengeEntity.builder().id(UUID.randomUUID()).challengeDate(LocalDate.now()).build();
+        DailyChallengeResponseDto responseDto = new DailyChallengeResponseDto(
+                challenge.getId(), LocalDate.now(), Collections.emptyList(), 0, false, null
+        );
+
+        when(dailyChallengeService.manualGenerateTodayChallenge(true)).thenReturn(challenge);
+        when(dailyChallengeService.getTodayChallenge(Optional.of(adminUser), null)).thenReturn(responseDto);
+
+        ResponseEntity<ApiResponseDto<DailyChallengeResponseDto>> response =
+                adminClipController.generateDailyChallenge(adminUser, true);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().data().challengeId()).isEqualTo(challenge.getId());
     }
 }

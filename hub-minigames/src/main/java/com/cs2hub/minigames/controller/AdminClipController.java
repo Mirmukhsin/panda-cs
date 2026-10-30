@@ -4,9 +4,12 @@ import com.cs2hub.common.dto.ApiResponseDto;
 import com.cs2hub.common.security.AuthenticatedUser;
 import com.cs2hub.common.security.CurrentUser;
 import com.cs2hub.minigames.domain.ClipStatus;
+import com.cs2hub.minigames.domain.DailyChallengeEntity;
 import com.cs2hub.minigames.dto.ClipSubmissionResponseDto;
+import com.cs2hub.minigames.dto.DailyChallengeResponseDto;
 import com.cs2hub.minigames.dto.ReviewClipRequestDto;
 import com.cs2hub.minigames.service.ClipService;
+import com.cs2hub.minigames.service.DailyChallengeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,22 +26,26 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-@Tag(name = "Admin Minigames Moderation", description = "Administrator endpoints for reviewing and approving community clips")
+@Tag(name = "Admin Minigames Moderation", description = "Administrator endpoints for reviewing community clips and generating daily challenges")
 @RestController
-@RequestMapping("/api/v1/minigames/admin/clips")
+@RequestMapping("/api/v1/minigames/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class AdminClipController {
 
     private final ClipService clipService;
+    private final DailyChallengeService dailyChallengeService;
 
     @Operation(
             summary = "List clips by moderation status",
@@ -50,7 +57,7 @@ public class AdminClipController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin privileges required")
     })
-    @GetMapping
+    @GetMapping("/clips")
     public ResponseEntity<ApiResponseDto<List<ClipSubmissionResponseDto>>> listClipsForReview(
             @Parameter(hidden = true)
             @CurrentUser AuthenticatedUser currentUser,
@@ -78,7 +85,7 @@ public class AdminClipController {
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin privileges required"),
             @ApiResponse(responseCode = "404", description = "Clip not found")
     })
-    @PatchMapping("/{clipId}/review")
+    @PatchMapping("/clips/{clipId}/review")
     public ResponseEntity<ApiResponseDto<ClipSubmissionResponseDto>> reviewClip(
             @Parameter(hidden = true)
             @CurrentUser AuthenticatedUser currentUser,
@@ -89,6 +96,29 @@ public class AdminClipController {
         verifyAdmin(currentUser);
         ClipSubmissionResponseDto updated = clipService.reviewClip(clipId, currentUser, request);
         return ResponseEntity.ok(ApiResponseDto.ok("Clip review status updated", updated));
+    }
+
+    @Operation(
+            summary = "Manually Generate Today's Challenge",
+            description = "Triggers immediate generation of today's Daily Challenge. Can optionally seed 3 sample approved clips if the pool is empty.",
+            security = @SecurityRequirement(name = "BearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Daily challenge generated successfully"),
+            @ApiResponse(responseCode = "400", description = "Not enough approved clips"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin privileges required")
+    })
+    @PostMapping("/daily/generate")
+    public ResponseEntity<ApiResponseDto<DailyChallengeResponseDto>> generateDailyChallenge(
+            @Parameter(hidden = true)
+            @CurrentUser AuthenticatedUser currentUser,
+            @Parameter(description = "If true and fewer than 3 approved clips exist, automatically seeds sample approved clips")
+            @RequestParam(required = false, defaultValue = "true") boolean seedIfEmpty
+    ) {
+        verifyAdmin(currentUser);
+        DailyChallengeEntity challenge = dailyChallengeService.manualGenerateTodayChallenge(seedIfEmpty);
+        DailyChallengeResponseDto response = dailyChallengeService.getTodayChallenge(Optional.of(currentUser), null);
+        return ResponseEntity.ok(ApiResponseDto.ok("Daily challenge generated successfully", response));
     }
 
     private void verifyAdmin(AuthenticatedUser currentUser) {
