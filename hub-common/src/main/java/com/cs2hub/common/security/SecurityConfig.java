@@ -60,6 +60,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/loadouts/generate").permitAll()
                         // Public GET endpoints for stratboard utility lineups and tactics playbooks
                         .requestMatchers(HttpMethod.GET, "/api/v1/stratboard/**").permitAll()
+                        // WebSocket STOMP endpoint for real-time collaborative stratboard
+                        .requestMatchers("/ws/stratboard/**").permitAll()
+                        // Stratboard room save-tactic requires authentication, while room joining/snapshotting is zero-friction
+                        .requestMatchers("/api/v1/stratboard/rooms/*/save-tactic").authenticated()
+                        .requestMatchers("/api/v1/stratboard/rooms/**").permitAll()
                         // User profile rules: /me requires authentication, /api/v1/users/{userId} is public
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
