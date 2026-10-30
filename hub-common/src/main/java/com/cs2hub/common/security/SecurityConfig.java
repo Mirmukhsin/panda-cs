@@ -56,11 +56,12 @@ public class SecurityConfig {
                         // Public daily guess endpoint for zero-friction play (supports guest session header)
                         .requestMatchers(HttpMethod.POST, "/api/v1/minigames/daily/guess").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/loadouts/**").permitAll()
+                        // Public loadouts generator endpoint for zero login friction
+                        .requestMatchers(HttpMethod.POST, "/api/v1/loadouts/generate").permitAll()
                         // User profile rules: /me requires authentication, /api/v1/users/{userId} is public
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/me").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*").permitAll()
-                        // Protected endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
+                        // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -71,12 +72,13 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint unauthorizedEntryPoint() {
         return (request, response, authException) -> {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             ErrorResponseDto error = ErrorResponseDto.of(
                     HttpStatus.UNAUTHORIZED.value(),
-                    "UNAUTHORIZED",
-                    "Full authentication is required to access this resource: " + authException.getMessage()
+                    "Unauthorized",
+                    "Authentication is required to access this resource",
+                    List.of(request.getRequestURI())
             );
             response.getWriter().write(objectMapper.writeValueAsString(error));
         };
@@ -85,14 +87,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173"
-        ));
+        configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

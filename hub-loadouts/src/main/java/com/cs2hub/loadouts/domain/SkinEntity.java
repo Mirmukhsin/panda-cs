@@ -109,14 +109,20 @@ public class SkinEntity {
         computeLowestPriceAndTimestamp();
     }
 
-    public BigDecimal getPriceForCondition(WearCondition condition) {
-        if (condition == null) return lowestPriceUsd;
-        return switch (condition) {
-            case FN -> priceFn != null ? priceFn : lowestPriceUsd;
-            case MW -> priceMw != null ? priceMw : lowestPriceUsd;
-            case FT -> priceFt != null ? priceFt : lowestPriceUsd;
-            case WW -> priceWw != null ? priceWw : lowestPriceUsd;
-            case BS -> priceBs != null ? priceBs : lowestPriceUsd;
+    public BigDecimal getExactPriceForCondition(WearCondition condition) {
+        if (condition == null) return null;
+        BigDecimal price = switch (condition) {
+            case FN -> priceFn;
+            case MW -> priceMw;
+            case FT -> priceFt;
+            case WW -> priceWw;
+            case BS -> priceBs;
         };
+        return (price != null && price.compareTo(BigDecimal.ZERO) > 0) ? price : null;
+    }
+
+    public BigDecimal getPriceForCondition(WearCondition condition) {
+        BigDecimal exact = getExactPriceForCondition(condition);
+        return exact != null ? exact : lowestPriceUsd;
     }
 }
