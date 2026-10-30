@@ -27,4 +27,14 @@ public interface UserLookupService {
      * @return map of UUID to UserSummaryDto for all resolved users
      */
     Map<UUID, UserSummaryDto> findByIds(Set<UUID> userIds);
+
+    /**
+     * Look up a single user by their 64-bit Steam ID.
+     *
+     * @param steamId the 64-bit Steam identifier
+     * @return Optional containing UserSummaryDto if found, empty otherwise
+     */
+    default Optional<UserSummaryDto> findBySteamId(String steamId) {
+        return Optional.empty();
+    }
 }

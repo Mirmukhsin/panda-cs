@@ -46,6 +46,14 @@ public class UserLookupServiceImpl implements UserLookupService {
                 ));
     }
 
+    @Override
+    public Optional<UserSummaryDto> findBySteamId(String steamId) {
+        if (steamId == null || steamId.isBlank()) {
+            return Optional.empty();
+        }
+        return userRepository.findBySteamId(steamId.trim()).map(this::toSummaryDto);
+    }
+
     private UserSummaryDto toSummaryDto(UserEntity user) {
         return new UserSummaryDto(
                 user.getId(),

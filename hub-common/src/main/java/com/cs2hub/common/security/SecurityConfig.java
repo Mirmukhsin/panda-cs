@@ -65,6 +65,10 @@ public class SecurityConfig {
                         // Stratboard room save-tactic requires authentication, while room joining/snapshotting is zero-friction
                         .requestMatchers("/api/v1/stratboard/rooms/*/save-tactic").authenticated()
                         .requestMatchers("/api/v1/stratboard/rooms/**").permitAll()
+                        // Matches: Public access for match submission, simulation, scoreboard viewing, and roast cards
+                        .requestMatchers("/api/v1/matches/**").permitAll()
+                        // Internal worker callback endpoints guarded by X-Worker-Secret header check
+                        .requestMatchers("/api/v1/internal/matches/**").permitAll()
                         // User profile rules: /me requires authentication, /api/v1/users/{userId} is public
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
