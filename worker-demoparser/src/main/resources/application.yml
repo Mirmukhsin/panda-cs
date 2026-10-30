@@ -1,0 +1,15 @@
+server:
+  port: 8081
+
+worker:
+  hub-base-url: ${HUB_BASE_URL:http://localhost:8080}
+  secret: ${WORKER_SHARED_SECRET:dev-worker-secret-key}
+  poll-interval-ms: ${WORKER_POLL_INTERVAL_MS:5000}
+  polling-enabled: ${WORKER_POLLING_ENABLED:true}
+  max-file-size-bytes: ${WORKER_MAX_FILE_SIZE_BYTES:524288000} # 500 MB limit
+  connect-timeout-ms: 5000
+  read-timeout-ms: 30000
+
+logging:
+  level:
+    com.cs2hub.demoparser: INFO

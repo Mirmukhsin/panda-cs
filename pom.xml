@@ -26,6 +26,7 @@
         <module>hub-stratboard</module>
         <module>hub-matches</module>
         <module>hub-bootstrap</module>
+        <module>worker-demoparser</module>
     </modules>
 
     <properties>
