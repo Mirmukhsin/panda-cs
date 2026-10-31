@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cs2hub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cs2hub
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d cs2hub"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cs2hub-network
+
+  hub-bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile.hub
+    container_name: cs2hub-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      WORKER_SHARED_SECRET: ${WORKER_SHARED_SECRET:-prod-worker-secret-key}
+      AUTH_DEV_MODE: ${AUTH_DEV_MODE:-true}
+      STEAM_API_KEY: ${STEAM_API_KEY:-}
+      STEAM_REALM: ${STEAM_REALM:-http://localhost:8080}
+      FRONTEND_AUTH_REDIRECT: ${FRONTEND_AUTH_REDIRECT:-http://localhost:3000/auth/callback}
+    ports:
+      - "8080:8080"
+    networks:
+      - cs2hub-network
+
+  worker-demoparser:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: cs2hub-worker
+    restart: unless-stopped
+    depends_on:
+      - hub-bootstrap
+    environment:
+      HUB_BASE_URL: http://hub-bootstrap:8080
+      WORKER_SHARED_SECRET: ${WORKER_SHARED_SECRET:-prod-worker-secret-key}
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-5000}
+      WORKER_POLLING_ENABLED: ${WORKER_POLLING_ENABLED:-true}
+    ports:
+      - "8081:8081"
+    networks:
+      - cs2hub-network
+
+volumes:
+  postgres_data:
+    name: cs2hub_full_postgres_data
+
+networks:
+  cs2hub-network:
+    name: cs2hub_network
+    driver: bridge

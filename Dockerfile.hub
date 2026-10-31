@@ -1,0 +1,41 @@
+# Multi-stage Dockerfile for Panda-CS Monolith (hub-bootstrap)
+
+# Stage 1: Build & Package
+FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
+WORKDIR /app
+
+# Copy root and module POMs to leverage Docker layer caching
+COPY pom.xml .
+COPY hub-common/pom.xml hub-common/
+COPY hub-identity/pom.xml hub-identity/
+COPY hub-loadouts/pom.xml hub-loadouts/
+COPY hub-minigames/pom.xml hub-minigames/
+COPY hub-stratboard/pom.xml hub-stratboard/
+COPY hub-matches/pom.xml hub-matches/
+COPY hub-bootstrap/pom.xml hub-bootstrap/
+COPY worker-demoparser/pom.xml worker-demoparser/
+
+# Pre-fetch project dependencies offline
+RUN mvn dependency:go-offline -B || true
+
+# Copy source code and build the monolith package
+COPY . .
+RUN mvn clean package -pl hub-bootstrap -am -DskipTests -B
+
+# Stage 2: Minimal Production JRE Runtime
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+# Security best practice: Run as unprivileged non-root user
+RUN addgroup -S cs2group && adduser -S cs2user -G cs2group
+
+COPY --from=builder /app/hub-bootstrap/target/hub-bootstrap-*.jar app.jar
+RUN chown -R cs2user:cs2group /app
+
+USER cs2user
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/v3/api-docs || exit 1
+
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
