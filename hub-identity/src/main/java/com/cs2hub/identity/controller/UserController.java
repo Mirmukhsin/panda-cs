@@ -79,7 +79,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Invalid profile fields"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    @PatchMapping("/me")
+    @PatchMapping({"/me", "/me/profile"})
     public ResponseEntity<ApiResponseDto<UserProfileDto>> updateCurrentUser(
             @Parameter(hidden = true)
             @CurrentUser AuthenticatedUser currentUser,

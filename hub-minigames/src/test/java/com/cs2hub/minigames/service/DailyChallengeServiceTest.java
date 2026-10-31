@@ -94,7 +94,9 @@ class DailyChallengeServiceTest {
         assertThat(c1.getStatus()).isEqualTo(ClipStatus.USED);
         assertThat(c2.getStatus()).isEqualTo(ClipStatus.USED);
         assertThat(c3.getStatus()).isEqualTo(ClipStatus.USED);
-        verify(dailyChallengeClipRepository).saveAll(any());
+        assertThat(challenge.getChallengeClips()).hasSize(3);
+        verify(dailyChallengeRepository).save(any(DailyChallengeEntity.class));
+        verify(clipRepository, org.mockito.Mockito.times(3)).save(any(ClipEntity.class));
     }
 
     @Test

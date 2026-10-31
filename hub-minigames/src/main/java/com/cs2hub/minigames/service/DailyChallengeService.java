@@ -81,7 +81,6 @@ public class DailyChallengeService {
                 .id(UUID.randomUUID())
                 .challengeDate(today)
                 .build();
-        challenge = dailyChallengeRepository.save(challenge);
 
         List<DailyChallengeClipEntity> challengeClips = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -98,8 +97,8 @@ public class DailyChallengeService {
             challengeClips.add(roundClip);
         }
 
-        dailyChallengeClipRepository.saveAll(challengeClips);
         challenge.setChallengeClips(challengeClips);
+        challenge = dailyChallengeRepository.save(challenge);
 
         log.info("Successfully generated daily challenge {} for date {}", challenge.getId(), today);
         return challenge;
