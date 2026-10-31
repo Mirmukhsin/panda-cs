@@ -38,6 +38,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       WORKER_SHARED_SECRET: ${WORKER_SHARED_SECRET:-prod-worker-secret-key}
       AUTH_DEV_MODE: ${AUTH_DEV_MODE:-true}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,https://all-in-one-cs2.vercel.app}
       STEAM_API_KEY: ${STEAM_API_KEY:-}
       STEAM_REALM: ${STEAM_REALM:-http://localhost:8080}
       FRONTEND_AUTH_REDIRECT: ${FRONTEND_AUTH_REDIRECT:-http://localhost:3000/auth/callback}

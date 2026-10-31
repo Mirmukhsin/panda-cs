@@ -10,6 +10,14 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class StratboardWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    private static final String[] ALLOWED_ORIGIN_PATTERNS = {
+            "https://all-in-one-cs2.vercel.app",
+            "https://*.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "*"
+    };
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic");
@@ -20,11 +28,11 @@ public class StratboardWebSocketConfig implements WebSocketMessageBrokerConfigur
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Direct WebSocket endpoint
         registry.addEndpoint("/ws/stratboard")
-                .setAllowedOriginPatterns("http://localhost:3000", "http://localhost:5173", "*");
+                .setAllowedOriginPatterns(ALLOWED_ORIGIN_PATTERNS);
 
         // SockJS fallback endpoint
         registry.addEndpoint("/ws/stratboard")
-                .setAllowedOriginPatterns("http://localhost:3000", "http://localhost:5173", "*")
+                .setAllowedOriginPatterns(ALLOWED_ORIGIN_PATTERNS)
                 .withSockJS();
     }
 }
