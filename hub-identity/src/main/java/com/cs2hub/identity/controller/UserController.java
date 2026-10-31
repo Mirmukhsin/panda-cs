@@ -7,11 +7,9 @@ import com.cs2hub.common.security.AuthenticatedUser;
 import com.cs2hub.common.security.CurrentUser;
 import com.cs2hub.common.spi.UserLookupService;
 import com.cs2hub.common.spi.UserSummaryDto;
-import com.cs2hub.identity.domain.UserEntity;
 import com.cs2hub.identity.dto.UpdateProfileRequestDto;
 import com.cs2hub.identity.dto.UserProfileDto;
-import com.cs2hub.identity.repository.UserRepository;
-import com.cs2hub.identity.service.SteamAuthService;
+import com.cs2hub.identity.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,8 +21,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,13 +36,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
-    private final SteamAuthService steamAuthService;
+    private final UserService userService;
     private final UserLookupService userLookupService;
 
     @Operation(
             summary = "Get Current Authenticated User Profile",
-            description = "Retrieves full profile details of the currently authenticated player.",
+            description = "Retrieves full profile details of the currently authenticated player, automatically resolving real Steam nickname and avatar.",
             security = @SecurityRequirement(name = "BearerAuth")
     )
     @ApiResponses({
@@ -66,10 +61,8 @@ public class UserController {
             throw new UnauthorizedException("Authentication is required to view your profile");
         }
 
-        UserEntity user = userRepository.findById(currentUser.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User profile not found for ID: " + currentUser.userId()));
-
-        return ResponseEntity.ok(ApiResponseDto.ok(steamAuthService.toUserProfileDto(user)));
+        UserProfileDto profile = userService.getCurrentUserProfile(currentUser.userId());
+        return ResponseEntity.ok(ApiResponseDto.ok(profile));
     }
 
     @Operation(
@@ -87,7 +80,6 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PatchMapping("/me")
-    @Transactional
     public ResponseEntity<ApiResponseDto<UserProfileDto>> updateCurrentUser(
             @Parameter(hidden = true)
             @CurrentUser AuthenticatedUser currentUser,
@@ -97,19 +89,8 @@ public class UserController {
             throw new UnauthorizedException("Authentication is required to update profile");
         }
 
-        UserEntity user = userRepository.findById(currentUser.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUser.userId()));
-
-        if (StringUtils.hasText(request.username())) {
-            user.setUsername(request.username().trim());
-        }
-        if (request.tradeUrl() != null) {
-            user.setTradeUrl(StringUtils.hasText(request.tradeUrl()) ? request.tradeUrl().trim() : null);
-        }
-
-        user = userRepository.save(user);
-
-        return ResponseEntity.ok(ApiResponseDto.ok("Profile updated successfully", steamAuthService.toUserProfileDto(user)));
+        UserProfileDto updated = userService.updateUserProfile(currentUser.userId(), request);
+        return ResponseEntity.ok(ApiResponseDto.ok("Profile updated successfully", updated));
     }
 
     @Operation(

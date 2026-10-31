@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @ExtendWith(MockitoExtension.class)
@@ -194,6 +195,103 @@ class SteamAuthServiceTest {
     }
 
     @Test
+    @DisplayName("Should fetch steam profile summary using Web API")
+    void shouldFetchProfileViaSteamWebApi() {
+        String steamId = "76561198033445566";
+        String steamApiResponse = """
+                {
+                  "response": {
+                    "players": [
+                      {
+                        "steamid": "76561198033445566",
+                        "personaname": "donk",
+                        "profileurl": "https://steamcommunity.com/id/donk_cs",
+                        "avatarfull": "https://avatars.steamstatic.com/donk_avatar.jpg"
+                      }
+                    ]
+                  }
+                }
+                """;
+        mockServer.expect(requestTo("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=TEST_STEAM_API_KEY&steamids=" + steamId))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(steamApiResponse, MediaType.APPLICATION_JSON));
+
+        SteamAuthService.SteamProfileSummary summary = steamAuthService.fetchSteamProfileSummary(steamId);
+
+        mockServer.verify();
+        assertThat(summary.username()).isEqualTo("donk");
+        assertThat(summary.avatarUrl()).isEqualTo("https://avatars.steamstatic.com/donk_avatar.jpg");
+        assertThat(summary.profileUrl()).isEqualTo("https://steamcommunity.com/id/donk_cs");
+    }
+
+    @Test
+    @DisplayName("Should fetch steam profile summary via XML fallback when API key is blank")
+    void shouldFetchProfileViaXmlFallbackWhenApiKeyBlank() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer localMockServer = MockRestServiceServer.bindTo(builder).build();
+
+        SteamAuthService serviceWithoutKey = new SteamAuthService(
+                userRepository,
+                jwtTokenProvider,
+                builder,
+                objectMapper,
+                "", // Blank API key triggers Step B directly
+                "http://localhost:8080",
+                "http://localhost:8080/api/v1/auth/steam/callback",
+                "http://localhost:3000/auth/callback",
+                true
+        );
+
+        String steamId = "76561198099887766";
+        String xmlResponse = """
+                <profile>
+                  <steamID><![CDATA[ZywOo_The_Chosen]]></steamID>
+                  <avatarFull><![CDATA[https://avatars.steamstatic.com/zywoo_full.jpg]]></avatarFull>
+                </profile>
+                """;
+
+        localMockServer.expect(requestTo("https://steamcommunity.com/profiles/" + steamId + "/?xml=1"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(xmlResponse, MediaType.APPLICATION_XML));
+
+        SteamAuthService.SteamProfileSummary summary = serviceWithoutKey.fetchSteamProfileSummary(steamId);
+
+        localMockServer.verify();
+        assertThat(summary.username()).isEqualTo("ZywOo_The_Chosen");
+        assertThat(summary.avatarUrl()).isEqualTo("https://avatars.steamstatic.com/zywoo_full.jpg");
+        assertThat(summary.profileUrl()).isEqualTo("https://steamcommunity.com/profiles/" + steamId);
+    }
+
+    @Test
+    @DisplayName("Should fetch steam profile summary via XML fallback when Web API fails")
+    void shouldFetchProfileViaXmlFallbackWhenWebApiFails() {
+        String steamId = "76561198011223344";
+
+        // Step A fails with 500
+        mockServer.expect(requestTo("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=TEST_STEAM_API_KEY&steamids=" + steamId))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withServerError());
+
+        // Step B succeeds with plain text tags
+        String xmlResponse = """
+                <profile>
+                  <steamID>s1mple_goat</steamID>
+                  <avatarFull>https://avatars.steamstatic.com/s1mple.jpg</avatarFull>
+                </profile>
+                """;
+
+        mockServer.expect(requestTo("https://steamcommunity.com/profiles/" + steamId + "/?xml=1"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(xmlResponse, MediaType.APPLICATION_XML));
+
+        SteamAuthService.SteamProfileSummary summary = steamAuthService.fetchSteamProfileSummary(steamId);
+
+        mockServer.verify();
+        assertThat(summary.username()).isEqualTo("s1mple_goat");
+        assertThat(summary.avatarUrl()).isEqualTo("https://avatars.steamstatic.com/s1mple.jpg");
+    }
+
+    @Test
     @DisplayName("Should reject invalid claimed_id format")
     void shouldRejectInvalidClaimedId() {
         Map<String, String> queryParams = Map.of(
@@ -202,7 +300,7 @@ class SteamAuthServiceTest {
 
         assertThatThrownBy(() -> steamAuthService.verifyAndAuthenticate(queryParams))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Invalid Steam claimed_id format");
+        .hasMessageContaining("Invalid Steam claimed_id format");
     }
 
     @Test

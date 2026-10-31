@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -35,6 +37,8 @@ public class SteamAuthService {
     public static final String STEAM_OPENID_URL = "https://steamcommunity.com/openid/login";
     public static final String DEFAULT_AVATAR_URL = "https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg";
     private static final Pattern STEAM_CLAIMED_ID_PATTERN = Pattern.compile("^https?://steamcommunity\\.com/openid/id/(7656119\\d{10})$");
+    private static final Pattern STEAM_XML_ID_PATTERN = Pattern.compile("<steamID>(?:<!\\[CDATA\\[)?(.*?)(?:\\]\\]>)?</steamID>", Pattern.DOTALL);
+    private static final Pattern STEAM_XML_AVATAR_PATTERN = Pattern.compile("<avatarFull>(?:<!\\[CDATA\\[)?(.*?)(?:\\]\\]>)?</avatarFull>", Pattern.DOTALL);
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
@@ -60,7 +64,13 @@ public class SteamAuthService {
     ) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.restClient = restClientBuilder != null ? restClientBuilder.build() : RestClient.create();
+
+        this.restClient = restClientBuilder != null
+                ? restClientBuilder.build()
+                : RestClient.builder()
+                        .requestFactory(createDefaultRequestFactory())
+                        .build();
+
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
         this.realm = realm;
@@ -95,7 +105,7 @@ public class SteamAuthService {
 
         verifyWithSteamOpenId(queryParams);
 
-        SteamPlayerProfile playerProfile = fetchSteamPlayerProfile(steamId);
+        SteamProfileSummary playerProfile = fetchSteamProfileSummary(steamId);
 
         UserEntity user = upsertUser(steamId, playerProfile);
 
@@ -167,48 +177,95 @@ public class SteamAuthService {
         }
     }
 
-    private SteamPlayerProfile fetchSteamPlayerProfile(String steamId) {
-        if (!StringUtils.hasText(apiKey)) {
-            log.debug("No Steam API key configured, falling back to default profile for steamId: {}", steamId);
-            return defaultProfile(steamId);
+    public SteamProfileSummary fetchSteamProfileSummary(String steamId) {
+        // Step A: Steam Web API (if api-key is configured and non-blank)
+        if (StringUtils.hasText(apiKey)) {
+            try {
+                String url = UriComponentsBuilder.fromHttpUrl("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/")
+                        .queryParam("key", apiKey)
+                        .queryParam("steamids", steamId)
+                        .toUriString();
+
+                String responseJson = restClient.get()
+                        .uri(url)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .body(String.class);
+
+                if (StringUtils.hasText(responseJson)) {
+                    JsonNode root = objectMapper.readTree(responseJson);
+                    JsonNode players = root.path("response").path("players");
+                    if (players.isArray() && !players.isEmpty()) {
+                        JsonNode player = players.get(0);
+                        String personaName = player.path("personaname").asText(null);
+                        String avatarFull = player.path("avatarfull").asText(null);
+                        String profileUrl = player.path("profileurl").asText(null);
+
+                        if (StringUtils.hasText(personaName)) {
+                            log.info("Resolved Steam profile for {} via Steam Web API: nickname='{}'", steamId, personaName);
+                            return new SteamProfileSummary(
+                                    personaName,
+                                    StringUtils.hasText(avatarFull) ? avatarFull : DEFAULT_AVATAR_URL,
+                                    StringUtils.hasText(profileUrl) ? profileUrl : defaultProfileUrl(steamId)
+                            );
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                log.warn("Step A (Steam Web API) failed for steamId {}: {}", steamId, ex.getMessage());
+            }
         }
 
+        // Step B (Zero-Key Automatic Fallback): Steam Public Community XML endpoint
         try {
-            String url = UriComponentsBuilder.fromHttpUrl("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/")
-                    .queryParam("key", apiKey)
-                    .queryParam("steamids", steamId)
-                    .toUriString();
-
-            String responseJson = restClient.get()
-                    .uri(url)
-                    .accept(MediaType.APPLICATION_JSON)
+            String xmlUrl = "https://steamcommunity.com/profiles/" + steamId + "/?xml=1";
+            String responseXml = restClient.get()
+                    .uri(xmlUrl)
+                    .accept(MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.ALL)
                     .retrieve()
                     .body(String.class);
 
-            if (StringUtils.hasText(responseJson)) {
-                JsonNode root = objectMapper.readTree(responseJson);
-                JsonNode players = root.path("response").path("players");
-                if (players.isArray() && !players.isEmpty()) {
-                    JsonNode player = players.get(0);
-                    String personaName = player.path("personaname").asText(null);
-                    String avatarFull = player.path("avatarfull").asText(null);
-                    String profileUrl = player.path("profileurl").asText(null);
+            if (StringUtils.hasText(responseXml) && !responseXml.contains("<error>")) {
+                String nickname = extractTagContent(STEAM_XML_ID_PATTERN, responseXml);
+                String avatarFull = extractTagContent(STEAM_XML_AVATAR_PATTERN, responseXml);
 
-                    return new SteamPlayerProfile(
-                            StringUtils.hasText(personaName) ? personaName : defaultUsername(steamId),
+                if (StringUtils.hasText(nickname)) {
+                    log.info("Resolved real Steam profile for {} via XML fallback: nickname='{}'", steamId, nickname);
+                    return new SteamProfileSummary(
+                            nickname,
                             StringUtils.hasText(avatarFull) ? avatarFull : DEFAULT_AVATAR_URL,
-                            StringUtils.hasText(profileUrl) ? profileUrl : defaultProfileUrl(steamId)
+                            defaultProfileUrl(steamId)
                     );
                 }
             }
         } catch (Exception ex) {
-            log.warn("Could not fetch player profile from Steam Web API: {}", ex.getMessage());
+            log.warn("Step B (Steam Community XML fallback) failed for steamId {}: {}", steamId, ex.getMessage());
         }
 
         return defaultProfile(steamId);
     }
 
-    private UserEntity upsertUser(String steamId, SteamPlayerProfile profile) {
+    public String extractTagContent(Pattern pattern, String text) {
+        if (text == null) return null;
+        Matcher m = pattern.matcher(text);
+        if (m.find()) {
+            String content = m.group(1);
+            if (content != null) {
+                content = content.trim();
+                if (content.startsWith("<![CDATA[") && content.endsWith("]]>")) {
+                    content = content.substring(9, content.length() - 3).trim();
+                }
+                return content.replace("&amp;", "&")
+                        .replace("&lt;", "<")
+                        .replace("&gt;", ">")
+                        .replace("&quot;", "\"")
+                        .replace("&apos;", "'");
+            }
+        }
+        return null;
+    }
+
+    private UserEntity upsertUser(String steamId, SteamProfileSummary profile) {
         UserEntity user = userRepository.findBySteamId(steamId)
                 .map(existing -> {
                     existing.setUsername(profile.username());
@@ -255,8 +312,8 @@ public class SteamAuthService {
         );
     }
 
-    private SteamPlayerProfile defaultProfile(String steamId) {
-        return new SteamPlayerProfile(
+    public SteamProfileSummary defaultProfile(String steamId) {
+        return new SteamProfileSummary(
                 defaultUsername(steamId),
                 DEFAULT_AVATAR_URL,
                 defaultProfileUrl(steamId)
@@ -280,5 +337,12 @@ public class SteamAuthService {
         return devModeEnabled;
     }
 
-    private record SteamPlayerProfile(String username, String avatarUrl, String profileUrl) {}
+    private static SimpleClientHttpRequestFactory createDefaultRequestFactory() {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(5));
+        requestFactory.setReadTimeout(Duration.ofSeconds(5));
+        return requestFactory;
+    }
+
+    public record SteamProfileSummary(String username, String avatarUrl, String profileUrl) {}
 }

@@ -187,4 +187,35 @@ class BudgetLoadoutGeneratorServiceTest {
         assertThat(highResult.totalCostUsd()).isLessThanOrEqualTo(new BigDecimal("300.00"));
         assertThat(highResult.items()).anyMatch(i -> i.wearCondition() == WearCondition.FN || i.wearCondition() == WearCondition.MW);
     }
+
+    @Test
+    @DisplayName("generateLoadout should generate non-empty loadout for $10.00 budget with RED theme")
+    void shouldGenerateNonEmptyLoadoutForTenDollarRedBudget() {
+        setupMockWeapons();
+
+        SkinEntity uspsCheckEngine = mockSkin("skin-usps-checkengine", "USP-S | Check Engine", "weapon_usp_silencer", "USP-S",
+                WeaponCategory.PISTOLS, TeamSide.CT, SkinColor.RED,
+                new BigDecimal("2.50"), new BigDecimal("1.80"), new BigDecimal("1.20"), new BigDecimal("1.00"), new BigDecimal("0.80"));
+        SkinEntity m4NightTerror = mockSkin("skin-m4-nightterror", "M4A1-S | Night Terror", "weapon_m4a1_silencer", "M4A1-S",
+                WeaponCategory.RIFLES, TeamSide.CT, SkinColor.RED,
+                new BigDecimal("2.50"), new BigDecimal("1.50"), new BigDecimal("0.90"), new BigDecimal("0.70"), new BigDecimal("0.60"));
+
+        when(skinRepository.findAllByWeaponId("weapon_usp_silencer")).thenReturn(List.of(uspsCheckEngine));
+        when(skinRepository.findAllByWeaponId("weapon_m4a1_silencer")).thenReturn(List.of(m4NightTerror));
+
+        GenerateLoadoutRequestDto request = new GenerateLoadoutRequestDto(
+                new BigDecimal("10.00"),
+                SkinColor.RED,
+                "weapon_m4a1_silencer",
+                false
+        );
+
+        GeneratedLoadoutResponseDto result = generatorService.generateLoadout(request);
+
+        assertThat(result.items()).isNotEmpty();
+        assertThat(result.totalCostUsd()).isLessThanOrEqualTo(new BigDecimal("10.00"));
+        assertThat(result.totalCostUsd()).isGreaterThan(BigDecimal.ZERO);
+        assertThat(result.themeColor()).isEqualTo(SkinColor.RED);
+        assertThat(result.items()).anyMatch(i -> i.skinName().contains("Night Terror") || i.skinName().contains("Water Elemental") || i.skinName().contains("Check Engine"));
+    }
 }

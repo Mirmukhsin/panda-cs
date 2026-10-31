@@ -87,8 +87,9 @@ public class BudgetLoadoutGeneratorService {
                 WeaponSlot remSlot = slotsToFill.get(j);
                 if (!remSlot.isLuxury()) {
                     List<CandidateOption> remCandidates = candidatesBySlot.get(remSlot);
-                    if (remCandidates != null && !remCandidates.isEmpty()) {
-                        minReserveForRemaining = minReserveForRemaining.add(remCandidates.get(remCandidates.size() - 1).price());
+                    CandidateOption cheapestRem = getCheapestOption(remCandidates);
+                    if (cheapestRem != null) {
+                        minReserveForRemaining = minReserveForRemaining.add(cheapestRem.price());
                     }
                 }
             }
@@ -97,34 +98,53 @@ public class BudgetLoadoutGeneratorService {
                     .setScale(2, RoundingMode.HALF_UP);
 
             BigDecimal maxSpendableForThisSlot = remainingBudget.subtract(minReserveForRemaining);
-            if (maxSpendableForThisSlot.compareTo(BigDecimal.ZERO) < 0) {
-                maxSpendableForThisSlot = BigDecimal.ZERO;
+            if (maxSpendableForThisSlot.compareTo(BigDecimal.ZERO) <= 0) {
+                // If forward reservation is too tight for low budgets (e.g. $5 - $10),
+                // don't starve current slot; allow spending up to remainingBudget
+                maxSpendableForThisSlot = remainingBudget;
             }
 
-            // Candidate options that don't starve remaining slots
+            final BigDecimal currentRemaining = remainingBudget;
+            final BigDecimal targetBudget = slotTargetBudget;
+
+            // Candidate options that fit within maxSpendableForThisSlot
             BigDecimal effectiveCap = maxSpendableForThisSlot;
             List<CandidateOption> affordableOptions = candidates.stream()
                     .filter(c -> c.price().compareTo(effectiveCap) <= 0)
                     .toList();
 
-            CandidateOption chosen;
-            if (!affordableOptions.isEmpty()) {
-                // Best fit matching theme color and target budget
-                chosen = affordableOptions.stream()
-                        .filter(c -> c.price().compareTo(slotTargetBudget) <= 0)
-                        .max(Comparator.comparingInt(CandidateOption::matchScore)
-                                .thenComparing(CandidateOption::wearQualityScore)
-                                .thenComparing(CandidateOption::price))
-                        .orElseGet(() -> affordableOptions.stream()
-                                .min(Comparator.comparing(CandidateOption::price))
-                                .orElse(affordableOptions.get(0)));
-            } else {
-                if (slot.isLuxury()) {
-                    continue; // Skip luxury knife/gloves if affordable options are empty
-                }
-                // Pick the cheapest overall option for this core weapon
-                chosen = candidates.get(candidates.size() - 1);
+            // If none fit within effectiveCap, fall back to any option within remainingBudget
+            if (affordableOptions.isEmpty()) {
+                affordableOptions = candidates.stream()
+                        .filter(c -> c.price().compareTo(currentRemaining) <= 0)
+                        .toList();
             }
+
+            if (affordableOptions.isEmpty()) {
+                // If slot is luxury or budget is exhausted, skip slot
+                continue;
+            }
+
+            final List<CandidateOption> finalAffordable = affordableOptions;
+
+            // Select best candidate from affordable options:
+            // 1. Try matching theme color within slotTargetBudget
+            // 2. Try matching theme color within effectiveCap / remainingBudget (preferring cheaper among matches)
+            // 3. Fall back to best wear / lowest price neutral skin within remainingBudget
+            CandidateOption chosen = finalAffordable.stream()
+                    .filter(c -> c.matchScore() > 0 && c.price().compareTo(targetBudget) <= 0)
+                    .max(Comparator.comparingInt(CandidateOption::matchScore)
+                            .thenComparing(CandidateOption::wearQualityScore)
+                            .thenComparing(CandidateOption::price))
+                    .orElseGet(() -> finalAffordable.stream()
+                            .filter(c -> c.matchScore() > 0)
+                            .max(Comparator.comparingInt(CandidateOption::matchScore)
+                                    .thenComparing(CandidateOption::wearQualityScore)
+                                    .thenComparing(c -> c.price().negate()))
+                            .orElseGet(() -> finalAffordable.stream()
+                                    .max(Comparator.comparing(CandidateOption::wearQualityScore)
+                                            .thenComparing(c -> c.price().negate()))
+                                    .orElse(finalAffordable.get(0))));
 
             selectedSlots.add(new SelectedSlotState(slot, chosen.skin(), chosen.wear(), chosen.price()));
             remainingBudget = remainingBudget.subtract(chosen.price());
@@ -143,12 +163,36 @@ public class BudgetLoadoutGeneratorService {
                 state.wear = cheaper.wear();
                 state.price = cheaper.price();
             } else {
-                // If every slot is already at its minimum and still exceeds budget, drop lowest-weight slot
+                // Never drop down to 0 items! If only 1 slot remains, stop dropping
+                if (selectedSlots.size() <= 1) {
+                    break;
+                }
                 Optional<SelectedSlotState> lowestPrioritySlot = selectedSlots.stream()
                         .min(Comparator.comparingDouble(s -> s.slot.getBudgetWeight()));
                 if (lowestPrioritySlot.isPresent()) {
                     selectedSlots.remove(lowestPrioritySlot.get());
                 } else {
+                    break;
+                }
+            }
+        }
+
+        // Low-budget safeguard: If selectedSlots is empty, find any skin fitting within budgetLimit
+        if (selectedSlots.isEmpty()) {
+            for (WeaponSlot slot : slotsToFill) {
+                List<CandidateOption> candidates = candidatesBySlot.get(slot);
+                if (candidates == null) continue;
+
+                Optional<CandidateOption> budgetFit = candidates.stream()
+                        .filter(c -> c.price().compareTo(budgetLimit) <= 0)
+                        .max(Comparator.comparingInt(CandidateOption::matchScore)
+                                .thenComparing(CandidateOption::wearQualityScore)
+                                .thenComparing(c -> c.price().negate()));
+
+                if (budgetFit.isPresent()) {
+                    CandidateOption chosen = budgetFit.get();
+                    selectedSlots.add(new SelectedSlotState(slot, chosen.skin(), chosen.wear(), chosen.price()));
+                    remainingBudget = budgetLimit.subtract(chosen.price());
                     break;
                 }
             }
@@ -162,7 +206,7 @@ public class BudgetLoadoutGeneratorService {
             BigDecimal currentTotal = calculateTotalCost(selectedSlots);
             BigDecimal currentRemaining = budgetLimit.subtract(currentTotal);
 
-            if (currentRemaining.compareTo(BigDecimal.valueOf(0.50)) <= 0) {
+            if (currentRemaining.compareTo(BigDecimal.valueOf(0.20)) <= 0) {
                 break;
             }
 
@@ -221,6 +265,13 @@ public class BudgetLoadoutGeneratorService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
+    private CandidateOption getCheapestOption(List<CandidateOption> candidates) {
+        if (candidates == null || candidates.isEmpty()) return null;
+        return candidates.stream()
+                .min(Comparator.comparing(CandidateOption::price))
+                .orElse(null);
+    }
+
     private boolean hasCheaperOption(SelectedSlotState state, List<CandidateOption> candidates) {
         if (candidates == null) return false;
         return candidates.stream().anyMatch(c -> c.price().compareTo(state.price) < 0);
@@ -230,7 +281,7 @@ public class BudgetLoadoutGeneratorService {
         return candidates.stream()
                 .filter(c -> c.price().compareTo(state.price) < 0)
                 .max(Comparator.comparing(CandidateOption::price))
-                .orElse(candidates.get(candidates.size() - 1));
+                .orElseGet(() -> getCheapestOption(candidates));
     }
 
     private String resolveWeaponId(WeaponSlot slot, String preferredCtRifle) {

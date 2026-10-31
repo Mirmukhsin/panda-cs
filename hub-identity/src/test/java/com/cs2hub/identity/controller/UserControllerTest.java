@@ -4,12 +4,9 @@ import com.cs2hub.common.dto.ApiResponseDto;
 import com.cs2hub.common.security.AuthenticatedUser;
 import com.cs2hub.common.spi.UserLookupService;
 import com.cs2hub.common.spi.UserSummaryDto;
-import com.cs2hub.identity.domain.UserEntity;
-import com.cs2hub.identity.domain.UserRole;
 import com.cs2hub.identity.dto.UpdateProfileRequestDto;
 import com.cs2hub.identity.dto.UserProfileDto;
-import com.cs2hub.identity.repository.UserRepository;
-import com.cs2hub.identity.service.SteamAuthService;
+import com.cs2hub.identity.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,17 +21,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private SteamAuthService steamAuthService;
+    private UserService userService;
 
     @Mock
     private UserLookupService userLookupService;
@@ -43,7 +36,7 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userController = new UserController(userRepository, steamAuthService, userLookupService);
+        userController = new UserController(userService, userLookupService);
     }
 
     @Test
@@ -52,20 +45,12 @@ class UserControllerTest {
         UUID userId = UUID.randomUUID();
         AuthenticatedUser currentUser = new AuthenticatedUser(userId, "76561198000000001", "electronic", "USER");
 
-        UserEntity entity = UserEntity.builder()
-                .id(userId)
-                .steamId("76561198000000001")
-                .username("electronic")
-                .role(UserRole.USER)
-                .build();
-
         UserProfileDto profileDto = new UserProfileDto(
                 userId, "76561198000000001", "electronic",
                 "https://avatar.url", "https://profile.url", null, "USER", Instant.now()
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(entity));
-        when(steamAuthService.toUserProfileDto(entity)).thenReturn(profileDto);
+        when(userService.getCurrentUserProfile(userId)).thenReturn(profileDto);
 
         ResponseEntity<ApiResponseDto<UserProfileDto>> response = userController.getCurrentUser(currentUser);
 
@@ -80,13 +65,6 @@ class UserControllerTest {
         UUID userId = UUID.randomUUID();
         AuthenticatedUser currentUser = new AuthenticatedUser(userId, "76561198000000001", "oldName", "USER");
 
-        UserEntity entity = UserEntity.builder()
-                .id(userId)
-                .steamId("76561198000000001")
-                .username("oldName")
-                .role(UserRole.USER)
-                .build();
-
         UpdateProfileRequestDto request = new UpdateProfileRequestDto(
                 "newName",
                 "https://steamcommunity.com/tradeoffer/new/?partner=1&token=abc"
@@ -97,9 +75,7 @@ class UserControllerTest {
                 null, null, request.tradeUrl(), "USER", Instant.now()
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(entity));
-        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(steamAuthService.toUserProfileDto(any(UserEntity.class))).thenReturn(updatedProfile);
+        when(userService.updateUserProfile(userId, request)).thenReturn(updatedProfile);
 
         ResponseEntity<ApiResponseDto<UserProfileDto>> response = userController.updateCurrentUser(currentUser, request);
 

@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,9 +90,11 @@ class CatalogSyncServiceTest {
     }
 
     @Test
-    @DisplayName("onStartup should not trigger seed if database already has skins")
+    @DisplayName("onStartup should not trigger seed if database already has skins and missing items exist")
     void shouldNotSeedOnStartupWhenDatabaseNotEmpty() {
         when(skinRepository.count()).thenReturn(50L);
+        when(skinRepository.existsById(anyString())).thenReturn(true);
+        when(stickerRepository.existsById(anyString())).thenReturn(true);
 
         catalogSyncService.onStartup();
 
