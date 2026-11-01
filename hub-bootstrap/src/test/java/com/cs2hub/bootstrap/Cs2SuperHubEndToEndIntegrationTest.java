@@ -123,6 +123,50 @@ class Cs2SuperHubEndToEndIntegrationTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.tradeUrl").value(newTradeUrl));
+
+        // 5. Test username/password registration
+        String uniqueSuffix = UUID.randomUUID().toString().substring(0, 8);
+        com.cs2hub.identity.dto.RegisterRequestDto regReq = new com.cs2hub.identity.dto.RegisterRequestDto(
+                "reg_user_" + uniqueSuffix,
+                "reg_" + uniqueSuffix + "@cs2hub.com",
+                "SecretPass123!"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(regReq)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.user.username").value("reg_user_" + uniqueSuffix))
+                .andExpect(jsonPath("$.data.user.email").value("reg_" + uniqueSuffix + "@cs2hub.com"));
+
+        // 6. Test login with email & password
+        com.cs2hub.identity.dto.LoginRequestDto loginEmailReq = new com.cs2hub.identity.dto.LoginRequestDto(
+                "reg_" + uniqueSuffix + "@cs2hub.com",
+                "SecretPass123!"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginEmailReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.user.username").value("reg_user_" + uniqueSuffix));
+
+        // 7. Test login with username & password
+        com.cs2hub.identity.dto.LoginRequestDto loginUsernameReq = new com.cs2hub.identity.dto.LoginRequestDto(
+                "reg_user_" + uniqueSuffix,
+                "SecretPass123!"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginUsernameReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
     }
 
     @Test

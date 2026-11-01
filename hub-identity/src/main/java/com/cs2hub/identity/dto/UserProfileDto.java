@@ -16,6 +16,9 @@ public record UserProfileDto(
         @Schema(description = "User display name", example = "s1mple")
         String username,
 
+        @Schema(description = "User email address", example = "player@cs2hub.com")
+        String email,
+
         @Schema(description = "Steam avatar full URL", example = "https://avatars.steamstatic.com/example_full.jpg")
         String avatarUrl,
 
@@ -31,4 +34,7 @@ public record UserProfileDto(
         @Schema(description = "Account registration timestamp")
         Instant createdAt
 ) implements Serializable {
+    public UserProfileDto(UUID id, String steamId, String username, String avatarUrl, String profileUrl, String tradeUrl, String role, Instant createdAt) {
+        this(id, steamId, username, null, avatarUrl, profileUrl, tradeUrl, role, createdAt);
+    }
 }

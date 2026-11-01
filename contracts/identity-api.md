@@ -4,7 +4,89 @@ This document provides API specifications, JSON payloads, and testing instructio
 
 ---
 
-## 1. Local Development Authentication (Fast Test Token)
+## 1. Standard Username & Password Authentication
+
+Players can register and authenticate directly using their username, email, and password alongside Steam OpenID.
+
+### A. Register Account
+**Endpoint:** `POST /api/v1/auth/register`  
+**Content-Type:** `application/json`
+
+#### Request Payload
+```json
+{
+  "username": "s1mple_pro",
+  "email": "player@cs2hub.com",
+  "password": "SecurePassword123!"
+}
+```
+
+#### Response Payload (`201 Created`)
+```json
+{
+  "success": true,
+  "message": "Registration successful",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "tokenType": "Bearer",
+    "expiresInMs": 604800000,
+    "user": {
+      "id": "c1f7b752-6b94-4d89-9831-50e599b50b55",
+      "steamId": null,
+      "username": "s1mple_pro",
+      "email": "player@cs2hub.com",
+      "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=s1mple_pro",
+      "profileUrl": null,
+      "tradeUrl": null,
+      "role": "USER",
+      "createdAt": "2026-11-01T14:30:00Z"
+    }
+  },
+  "timestamp": "2026-11-01T14:30:00Z"
+}
+```
+
+### B. Login with Password
+**Endpoint:** `POST /api/v1/auth/login`  
+**Content-Type:** `application/json`
+
+#### Request Payload
+```json
+{
+  "usernameOrEmail": "player@cs2hub.com",
+  "password": "SecurePassword123!"
+}
+```
+*(Accepts either the account username or email in `usernameOrEmail`).*
+
+#### Response Payload (`200 OK`)
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "tokenType": "Bearer",
+    "expiresInMs": 604800000,
+    "user": {
+      "id": "c1f7b752-6b94-4d89-9831-50e599b50b55",
+      "steamId": null,
+      "username": "s1mple_pro",
+      "email": "player@cs2hub.com",
+      "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=s1mple_pro",
+      "profileUrl": null,
+      "tradeUrl": null,
+      "role": "USER",
+      "createdAt": "2026-11-01T14:30:00Z"
+    }
+  },
+  "timestamp": "2026-11-01T14:30:00Z"
+}
+```
+
+---
+
+## 2. Local Development Authentication (Fast Test Token)
 
 In local and development environments (`app.auth.dev-mode-enabled=true`), the backend provides a direct login endpoint that bypasses Steam OpenID and immediately issues a valid JWT access token.
 

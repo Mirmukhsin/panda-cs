@@ -304,6 +304,7 @@ public class SteamAuthService {
                 user.getId(),
                 user.getSteamId(),
                 user.getUsername(),
+                user.getEmail(),
                 user.getAvatarUrl(),
                 user.getProfileUrl(),
                 user.getTradeUrl(),

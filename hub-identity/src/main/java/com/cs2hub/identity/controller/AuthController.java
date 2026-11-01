@@ -1,8 +1,12 @@
 package com.cs2hub.identity.controller;
 
 import com.cs2hub.common.dto.ApiResponseDto;
+import com.cs2hub.identity.dto.AuthResponseDto;
 import com.cs2hub.identity.dto.AuthTokenResponseDto;
 import com.cs2hub.identity.dto.DevLoginRequestDto;
+import com.cs2hub.identity.dto.LoginRequestDto;
+import com.cs2hub.identity.dto.RegisterRequestDto;
+import com.cs2hub.identity.service.AuthService;
 import com.cs2hub.identity.service.SteamAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,6 +37,49 @@ import java.util.Map;
 public class AuthController {
 
     private final SteamAuthService steamAuthService;
+    private final AuthService authService;
+
+    @Operation(
+            summary = "Register with Username, Email and Password",
+            description = "Registers a new user account with credentials and returns a JWT access token."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Registration successful",
+                    content = @Content(schema = @Schema(implementation = AuthResponseDto.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation error or username/email already taken")
+    })
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponseDto<AuthResponseDto>> register(
+            @Valid @RequestBody RegisterRequestDto request
+    ) {
+        AuthResponseDto response = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseDto.ok("Registration successful", response));
+    }
+
+    @Operation(
+            summary = "Login with Username/Email and Password",
+            description = "Authenticates player credentials and returns a JWT access token."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Login successful",
+                    content = @Content(schema = @Schema(implementation = AuthResponseDto.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Invalid username/email or password")
+    })
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponseDto<AuthResponseDto>> login(
+            @Valid @RequestBody LoginRequestDto request
+    ) {
+        AuthResponseDto response = authService.loginWithPassword(request);
+        return ResponseEntity.ok(ApiResponseDto.ok("Login successful", response));
+    }
 
     @Operation(
             summary = "Initiate Steam OpenID 2.0 Login",

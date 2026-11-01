@@ -30,11 +30,17 @@ public class UserEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "steam_id", nullable = false, unique = true, length = 32)
+    @Column(name = "steam_id", unique = true, length = 32)
     private String steamId;
 
     @Column(name = "username", nullable = false, length = 128)
     private String username;
+
+    @Column(name = "email", length = 255)
+    private String email;
+
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
 
     @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
