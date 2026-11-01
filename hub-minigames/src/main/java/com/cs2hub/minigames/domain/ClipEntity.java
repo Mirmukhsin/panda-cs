@@ -30,7 +30,7 @@ public class ClipEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "submitted_by_user_id", nullable = false)
+    @Column(name = "submitted_by_user_id")
     private UUID submittedByUserId;
 
     @Column(name = "title", nullable = false, length = 160)
@@ -59,6 +59,10 @@ public class ClipEntity {
     @Column(name = "reviewed_by_user_id")
     private UUID reviewedByUserId;
 
+    @Builder.Default
+    @Column(name = "is_curated", nullable = false)
+    private Boolean isCurated = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -72,6 +76,9 @@ public class ClipEntity {
         }
         if (this.status == null) {
             this.status = ClipStatus.PENDING;
+        }
+        if (this.isCurated == null) {
+            this.isCurated = false;
         }
         Instant now = Instant.now();
         if (this.createdAt == null) {

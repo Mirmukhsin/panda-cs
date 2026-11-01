@@ -1,7 +1,6 @@
 package com.cs2hub.minigames.service;
 
 import com.cs2hub.common.exception.BadRequestException;
-import com.cs2hub.common.exception.ResourceNotFoundException;
 import com.cs2hub.common.security.AuthenticatedUser;
 import com.cs2hub.common.spi.UserLookupService;
 import com.cs2hub.common.spi.UserSummaryDto;
@@ -30,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +39,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -75,17 +76,18 @@ class DailyChallengeServiceTest {
     }
 
     @Test
-    @DisplayName("Should generate today's challenge from 3 approved clips and update their status to USED")
+    @DisplayName("Should generate today's challenge from 3 approved community clips and update their status to USED")
     void shouldGenerateChallengeFromApprovedClips() {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         when(dailyChallengeRepository.findByChallengeDate(today)).thenReturn(Optional.empty());
 
-        ClipEntity c1 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).build();
-        ClipEntity c2 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).build();
-        ClipEntity c3 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).build();
+        ClipEntity c1 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).isCurated(false).build();
+        ClipEntity c2 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).isCurated(false).build();
+        ClipEntity c3 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).isCurated(false).build();
 
-        when(clipRepository.findTop3ByStatusOrderByCreatedAtAsc(ClipStatus.APPROVED)).thenReturn(List.of(c1, c2, c3));
+        when(clipRepository.findTop3ByStatusAndIsCuratedFalseOrderByCreatedAtAsc(ClipStatus.APPROVED)).thenReturn(List.of(c1, c2, c3));
         when(dailyChallengeRepository.save(any(DailyChallengeEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(dailyChallengeClipRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
 
         DailyChallengeEntity challenge = dailyChallengeService.generateTodayChallengeIfAbsent();
 
@@ -96,7 +98,46 @@ class DailyChallengeServiceTest {
         assertThat(c3.getStatus()).isEqualTo(ClipStatus.USED);
         assertThat(challenge.getChallengeClips()).hasSize(3);
         verify(dailyChallengeRepository).save(any(DailyChallengeEntity.class));
-        verify(clipRepository, org.mockito.Mockito.times(3)).save(any(ClipEntity.class));
+        verify(clipRepository, times(3)).save(any(ClipEntity.class));
+        verify(dailyChallengeClipRepository).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("Should fallback to curated clips when community clips are fewer than 3")
+    void shouldFallbackToCuratedClipsWhenCommunityClipsInsufficient() {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        when(dailyChallengeRepository.findByChallengeDate(today)).thenReturn(Optional.empty());
+        when(dailyChallengeRepository.findByChallengeDate(today.minusDays(1))).thenReturn(Optional.empty());
+
+        // 1 community clip
+        ClipEntity comm1 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).isCurated(false).build();
+        when(clipRepository.findTop3ByStatusAndIsCuratedFalseOrderByCreatedAtAsc(ClipStatus.APPROVED)).thenReturn(List.of(comm1));
+
+        // 3 curated clips available
+        ClipEntity cur1 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).isCurated(true).build();
+        ClipEntity cur2 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).isCurated(true).build();
+        ClipEntity cur3 = ClipEntity.builder().id(UUID.randomUUID()).status(ClipStatus.APPROVED).isCurated(true).build();
+        when(clipRepository.findAllByStatusAndIsCuratedTrue(ClipStatus.APPROVED)).thenReturn(List.of(cur1, cur2, cur3));
+
+        when(dailyChallengeRepository.save(any(DailyChallengeEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(dailyChallengeClipRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        DailyChallengeEntity challenge = dailyChallengeService.generateTodayChallengeIfAbsent();
+
+        assertThat(challenge).isNotNull();
+        assertThat(challenge.getChallengeClips()).hasSize(3);
+
+        // Community clip was marked USED
+        assertThat(comm1.getStatus()).isEqualTo(ClipStatus.USED);
+        verify(clipRepository, times(1)).save(comm1);
+
+        // Curated clips remained APPROVED and were not saved as USED
+        assertThat(cur1.getStatus()).isEqualTo(ClipStatus.APPROVED);
+        assertThat(cur2.getStatus()).isEqualTo(ClipStatus.APPROVED);
+        assertThat(cur3.getStatus()).isEqualTo(ClipStatus.APPROVED);
+        verify(clipRepository, never()).save(cur1);
+        verify(clipRepository, never()).save(cur2);
+        verify(clipRepository, never()).save(cur3);
     }
 
     @Test

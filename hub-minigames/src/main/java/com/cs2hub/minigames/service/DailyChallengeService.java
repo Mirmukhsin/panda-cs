@@ -35,7 +35,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -70,23 +69,73 @@ public class DailyChallengeService {
             return existing.get();
         }
 
-        List<ClipEntity> availableClips = clipRepository.findTop3ByStatusOrderByCreatedAtAsc(ClipStatus.APPROVED);
-        if (availableClips.size() < 3) {
-            log.warn("Cannot generate daily challenge for {}: only {} APPROVED clips available (minimum 3 required)",
-                    today, availableClips.size());
+        // 1. First, query up to 3 approved community clips (isCurated = false)
+        List<ClipEntity> communityClips = clipRepository.findTop3ByStatusAndIsCuratedFalseOrderByCreatedAtAsc(ClipStatus.APPROVED);
+        List<ClipEntity> selectedClips = new ArrayList<>(communityClips);
+
+        // 2. If fewer than 3 community clips, fill remaining slots from the curated pool (isCurated = true)
+        if (selectedClips.size() < 3) {
+            int needed = 3 - selectedClips.size();
+            List<ClipEntity> curatedPool = clipRepository.findAllByStatusAndIsCuratedTrue(ClipStatus.APPROVED);
+
+            if (curatedPool.isEmpty()) {
+                seedSampleApprovedClips();
+                curatedPool = clipRepository.findAllByStatusAndIsCuratedTrue(ClipStatus.APPROVED);
+            }
+
+            Set<UUID> alreadySelectedIds = selectedClips.stream()
+                    .map(ClipEntity::getId)
+                    .collect(Collectors.toSet());
+
+            List<ClipEntity> eligibleCurated = curatedPool.stream()
+                    .filter(c -> !alreadySelectedIds.contains(c.getId()))
+                    .collect(Collectors.toList());
+
+            // Avoid repeating clips from yesterday if we have enough curated clips
+            Optional<DailyChallengeEntity> yesterdayChallenge = dailyChallengeRepository.findByChallengeDate(today.minusDays(1));
+            Set<UUID> yesterdayClipIds = yesterdayChallenge.map(c -> {
+                List<DailyChallengeClipEntity> prevRounds = c.getChallengeClips() != null && !c.getChallengeClips().isEmpty()
+                        ? c.getChallengeClips()
+                        : dailyChallengeClipRepository.findAllByChallengeIdOrderByRoundOrderAsc(c.getId());
+                return prevRounds.stream().map(rc -> rc.getClip().getId()).collect(Collectors.toSet());
+            }).orElse(Collections.emptySet());
+
+            List<ClipEntity> preferredCurated = eligibleCurated.stream()
+                    .filter(c -> !yesterdayClipIds.contains(c.getId()))
+                    .collect(Collectors.toList());
+
+            List<ClipEntity> poolToPickFrom = preferredCurated.size() >= needed ? preferredCurated : eligibleCurated;
+            Collections.shuffle(poolToPickFrom);
+
+            for (ClipEntity clip : poolToPickFrom) {
+                if (selectedClips.size() >= 3) {
+                    break;
+                }
+                selectedClips.add(clip);
+            }
+        }
+
+        if (selectedClips.size() < 3) {
+            log.warn("Cannot generate daily challenge for {}: only {} clips available in combined pool (minimum 3 required)",
+                    today, selectedClips.size());
             return null;
         }
 
+        // Save challenge entity first
         DailyChallengeEntity challenge = DailyChallengeEntity.builder()
                 .id(UUID.randomUUID())
                 .challengeDate(today)
                 .build();
+        challenge = dailyChallengeRepository.save(challenge);
 
+        // Build and save round clips; community clips become USED, curated clips remain APPROVED
         List<DailyChallengeClipEntity> challengeClips = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            ClipEntity clip = availableClips.get(i);
-            clip.setStatus(ClipStatus.USED);
-            clipRepository.save(clip);
+            ClipEntity clip = selectedClips.get(i);
+            if (!Boolean.TRUE.equals(clip.getIsCurated())) {
+                clip.setStatus(ClipStatus.USED);
+                clipRepository.save(clip);
+            }
 
             DailyChallengeClipEntity roundClip = DailyChallengeClipEntity.builder()
                     .id(UUID.randomUUID())
@@ -97,10 +146,13 @@ public class DailyChallengeService {
             challengeClips.add(roundClip);
         }
 
+        challengeClips = dailyChallengeClipRepository.saveAll(challengeClips);
         challenge.setChallengeClips(challengeClips);
-        challenge = dailyChallengeRepository.save(challenge);
 
-        log.info("Successfully generated daily challenge {} for date {}", challenge.getId(), today);
+        log.info("Successfully generated daily challenge {} for date {} with {} clips ({} community, {} curated)",
+                challenge.getId(), today, selectedClips.size(),
+                selectedClips.stream().filter(c -> !Boolean.TRUE.equals(c.getIsCurated())).count(),
+                selectedClips.stream().filter(c -> Boolean.TRUE.equals(c.getIsCurated())).count());
         return challenge;
     }
 
@@ -112,7 +164,8 @@ public class DailyChallengeService {
             return existing.get();
         }
 
-        if (seedSampleClipsIfEmpty && clipRepository.countByStatus(ClipStatus.APPROVED) < 3) {
+        if (seedSampleClipsIfEmpty && clipRepository.countByStatusAndIsCuratedTrue(ClipStatus.APPROVED) < 3
+                && clipRepository.countByStatus(ClipStatus.APPROVED) < 3) {
             seedSampleApprovedClips();
         }
 
@@ -123,7 +176,7 @@ public class DailyChallengeService {
         return created;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DailyChallengeResponseDto getTodayChallenge(Optional<AuthenticatedUser> currentUser, String guestSessionId) {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         DailyChallengeEntity challenge = dailyChallengeRepository.findByChallengeDate(today)
@@ -133,8 +186,11 @@ public class DailyChallengeService {
             throw new ResourceNotFoundException("No active daily challenge available for today");
         }
 
-        List<DailyChallengeClipEntity> roundClips = dailyChallengeClipRepository
-                .findAllByChallengeIdOrderByRoundOrderAsc(challenge.getId());
+        List<DailyChallengeClipEntity> roundClips = challenge.getChallengeClips();
+        if (roundClips == null || roundClips.isEmpty()) {
+            roundClips = dailyChallengeClipRepository
+                    .findAllByChallengeIdOrderByRoundOrderAsc(challenge.getId());
+        }
 
         List<UserGuessEntity> userGuesses = getUserGuesses(challenge.getId(), currentUser, guestSessionId);
         Map<UUID, UserGuessEntity> guessMap = userGuesses.stream()
@@ -208,10 +264,17 @@ public class DailyChallengeService {
 
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         DailyChallengeEntity challenge = dailyChallengeRepository.findByChallengeDate(today)
-                .orElseThrow(() -> new ResourceNotFoundException("No active daily challenge for today"));
+                .orElseGet(this::generateTodayChallengeIfAbsent);
 
-        List<DailyChallengeClipEntity> roundClips = dailyChallengeClipRepository
-                .findAllByChallengeIdOrderByRoundOrderAsc(challenge.getId());
+        if (challenge == null) {
+            throw new ResourceNotFoundException("No active daily challenge for today");
+        }
+
+        List<DailyChallengeClipEntity> roundClips = challenge.getChallengeClips();
+        if (roundClips == null || roundClips.isEmpty()) {
+            roundClips = dailyChallengeClipRepository
+                    .findAllByChallengeIdOrderByRoundOrderAsc(challenge.getId());
+        }
 
         DailyChallengeClipEntity targetRoundClip = roundClips.stream()
                 .filter(rc -> rc.getClip().getId().equals(request.clipId()))
@@ -336,7 +399,7 @@ public class DailyChallengeService {
         return Collections.emptyList();
     }
 
-    private void seedSampleApprovedClips() {
+    public void seedSampleApprovedClips() {
         UUID systemUser = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
         List<ClipEntity> sampleClips = List.of(
@@ -350,6 +413,7 @@ public class DailyChallengeService {
                         .actualPremierRating(16450)
                         .actualFaceitLevel(7)
                         .status(ClipStatus.APPROVED)
+                        .isCurated(true)
                         .build(),
                 ClipEntity.builder()
                         .id(UUID.randomUUID())
@@ -361,6 +425,7 @@ public class DailyChallengeService {
                         .actualPremierRating(19800)
                         .actualFaceitLevel(9)
                         .status(ClipStatus.APPROVED)
+                        .isCurated(true)
                         .build(),
                 ClipEntity.builder()
                         .id(UUID.randomUUID())
@@ -372,10 +437,11 @@ public class DailyChallengeService {
                         .actualPremierRating(13200)
                         .actualFaceitLevel(5)
                         .status(ClipStatus.APPROVED)
+                        .isCurated(true)
                         .build()
         );
 
         clipRepository.saveAll(sampleClips);
-        log.info("Seeded 3 sample APPROVED clips for minigames testing");
+        log.info("Seeded 3 sample APPROVED curated clips for minigames testing");
     }
 }

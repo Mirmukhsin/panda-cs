@@ -17,5 +17,13 @@ public interface ClipRepository extends JpaRepository<ClipEntity, UUID> {
 
     List<ClipEntity> findTop3ByStatusOrderByCreatedAtAsc(ClipStatus status);
 
+    List<ClipEntity> findTop3ByStatusAndIsCuratedFalseOrderByCreatedAtAsc(ClipStatus status);
+
+    List<ClipEntity> findAllByStatusAndIsCuratedFalseOrderByCreatedAtAsc(ClipStatus status);
+
+    List<ClipEntity> findAllByStatusAndIsCuratedTrue(ClipStatus status);
+
     long countByStatus(ClipStatus status);
+
+    long countByStatusAndIsCuratedTrue(ClipStatus status);
 }
