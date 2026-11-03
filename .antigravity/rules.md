@@ -65,3 +65,11 @@ The repository is split into 7 Maven modules under `com.cs2hub`:
   - `refactor(module): ...`
   - `docs(module): ...`
 - **Frontend Markdown API Contracts**: Maintain up-to-date markdown API contracts inside `/contracts` (e.g. `/contracts/<module>-api.md`) for the Frontend Developer, containing endpoint summaries, parameter definitions, and realistic JSON request/response payloads.
+
+---
+
+## 5. Multi-Agent Orchestration Rules
+1. **Lead Architect & Release Manager**: The Main Agent acts as Lead Architect & Release Manager, coordinating work, assigning tasks, and conducting final integration.
+2. **Backend Subagent Scope**: Strictly confined to `d:/Return/CS` (`panda-cs`, Java 21 / Spring Boot, verified via `mvn test`).
+3. **Frontend Subagent Scope**: Strictly confined to `d:/Return/CS-front/all-in-one-cs2-main` (`all-in-one-cs2`, React 19 / TypeScript / Vite 8, verified via `npx tsc --noEmit && npm run build`).
+4. **Git Operation Restrictions**: Subagents must **NEVER** run `git commit`, `git merge`, or `git push`. Only the Main Agent executes Git operations after verifying all subagent test gates pass.
