@@ -11,16 +11,19 @@ import com.cs2hub.loadouts.repository.StickerRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,21 +40,40 @@ public class CatalogSyncService {
     private final ObjectMapper objectMapper;
     private final String skinsApiUrl;
     private final String stickersApiUrl;
+    private final boolean syncImagesOnStartup;
 
+    @Autowired
     public CatalogSyncService(
             SkinRepository skinRepository,
             StickerRepository stickerRepository,
             RestClient.Builder restClientBuilder,
             ObjectMapper objectMapper,
             @Value("${app.loadouts.skins-api-url:https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json}") String skinsApiUrl,
-            @Value("${app.loadouts.stickers-api-url:https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/stickers.json}") String stickersApiUrl
+            @Value("${app.loadouts.stickers-api-url:https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/stickers.json}") String stickersApiUrl,
+            @Value("${app.loadouts.sync-images-on-startup:false}") boolean syncImagesOnStartup
     ) {
         this.skinRepository = skinRepository;
         this.stickerRepository = stickerRepository;
-        this.restClient = restClientBuilder != null ? restClientBuilder.build() : RestClient.create();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofMillis(5000));
+        requestFactory.setReadTimeout(Duration.ofMillis(5000));
+        RestClient.Builder builder = restClientBuilder != null ? restClientBuilder : RestClient.builder();
+        this.restClient = builder.requestFactory(requestFactory).build();
         this.objectMapper = objectMapper;
         this.skinsApiUrl = skinsApiUrl;
         this.stickersApiUrl = stickersApiUrl;
+        this.syncImagesOnStartup = syncImagesOnStartup;
+    }
+
+    public CatalogSyncService(
+            SkinRepository skinRepository,
+            StickerRepository stickerRepository,
+            RestClient.Builder restClientBuilder,
+            ObjectMapper objectMapper,
+            String skinsApiUrl,
+            String stickersApiUrl
+    ) {
+        this(skinRepository, stickerRepository, restClientBuilder, objectMapper, skinsApiUrl, stickersApiUrl, false);
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -62,7 +84,13 @@ public class CatalogSyncService {
         } else {
             seedMissingCuratedSkins();
         }
-        updateImageUrlsFromApi();
+        if (syncImagesOnStartup) {
+            updateImageUrlsFromApi();
+        }
+    }
+
+    public boolean isSyncImagesOnStartup() {
+        return syncImagesOnStartup;
     }
 
     @Transactional

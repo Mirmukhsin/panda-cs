@@ -2,6 +2,7 @@ package com.cs2hub.identity.service;
 
 import com.cs2hub.identity.domain.UserEntity;
 import com.cs2hub.identity.domain.UserRole;
+import com.cs2hub.identity.dto.UpdateProfileRequestDto;
 import com.cs2hub.identity.dto.UserProfileDto;
 import com.cs2hub.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,5 +113,94 @@ class UserServiceTest {
         assertThat(result.username()).isEqualTo("s1mple_pro");
         verify(steamAuthService, never()).fetchSteamProfileSummary(any());
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should update user profile with new avatarUrl, username, and tradeUrl")
+    void shouldUpdateUserProfileWithAvatarUrl() {
+        UUID userId = UUID.randomUUID();
+        UserEntity userEntity = UserEntity.builder()
+                .id(userId)
+                .steamId("76561198000000003")
+                .username("oldUsername")
+                .avatarUrl("https://old-avatar.com/old.png")
+                .tradeUrl("https://steamcommunity.com/tradeoffer/old")
+                .role(UserRole.USER)
+                .build();
+
+        UpdateProfileRequestDto request = new UpdateProfileRequestDto(
+                "newUsername",
+                "https://steamcommunity.com/tradeoffer/new",
+                "https://new-avatar.com/new.png"
+        );
+
+        UserProfileDto updatedDto = new UserProfileDto(
+                userId, "76561198000000003", "newUsername",
+                "https://new-avatar.com/new.png", null,
+                "https://steamcommunity.com/tradeoffer/new", "USER", Instant.now()
+        );
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(steamAuthService.toUserProfileDto(userEntity)).thenReturn(updatedDto);
+
+        UserProfileDto result = userService.updateUserProfile(userId, request);
+
+        assertThat(result).isNotNull();
+        assertThat(userEntity.getUsername()).isEqualTo("newUsername");
+        assertThat(userEntity.getTradeUrl()).isEqualTo("https://steamcommunity.com/tradeoffer/new");
+        assertThat(userEntity.getAvatarUrl()).isEqualTo("https://new-avatar.com/new.png");
+        verify(userRepository).save(userEntity);
+    }
+
+    @Test
+    @DisplayName("Should set avatarUrl to null when empty or whitespace string is provided")
+    void shouldClearAvatarUrlWhenEmptyStringProvided() {
+        UUID userId = UUID.randomUUID();
+        UserEntity userEntity = UserEntity.builder()
+                .id(userId)
+                .username("player1")
+                .avatarUrl("https://example.com/avatar.png")
+                .role(UserRole.USER)
+                .build();
+
+        UpdateProfileRequestDto request = new UpdateProfileRequestDto(null, null, "   ");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(steamAuthService.toUserProfileDto(userEntity)).thenReturn(
+                new UserProfileDto(userId, null, "player1", null, null, null, "USER", Instant.now())
+        );
+
+        userService.updateUserProfile(userId, request);
+
+        assertThat(userEntity.getAvatarUrl()).isNull();
+        verify(userRepository).save(userEntity);
+    }
+
+    @Test
+    @DisplayName("Should preserve existing avatarUrl when null avatarUrl is provided")
+    void shouldPreserveAvatarUrlWhenNullProvided() {
+        UUID userId = UUID.randomUUID();
+        UserEntity userEntity = UserEntity.builder()
+                .id(userId)
+                .username("player1")
+                .avatarUrl("https://example.com/existing.png")
+                .role(UserRole.USER)
+                .build();
+
+        UpdateProfileRequestDto request = new UpdateProfileRequestDto("updatedUsername", null);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(steamAuthService.toUserProfileDto(userEntity)).thenReturn(
+                new UserProfileDto(userId, null, "updatedUsername", "https://example.com/existing.png", null, null, "USER", Instant.now())
+        );
+
+        userService.updateUserProfile(userId, request);
+
+        assertThat(userEntity.getUsername()).isEqualTo("updatedUsername");
+        assertThat(userEntity.getAvatarUrl()).isEqualTo("https://example.com/existing.png");
+        verify(userRepository).save(userEntity);
     }
 }

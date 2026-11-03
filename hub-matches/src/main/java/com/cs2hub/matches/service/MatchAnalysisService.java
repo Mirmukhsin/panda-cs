@@ -102,6 +102,10 @@ public class MatchAnalysisService {
                 .build();
 
         MatchAnalysisEntity saved = matchAnalysisRepository.save(entity);
+        if (StringUtils.hasText(request.demoUrl())) {
+            log.info("Queued match analysis job [{}] with demoUrl '{}' for worker parsing", saved.getId(), saved.getDemoUrl());
+            return mapToDetailDto(saved);
+        }
         log.info("Queued match analysis job [{}] with slug '{}', triggering deterministic simulation fallback", saved.getId(), saved.getShareSlug());
         return populateDeterministicAnalysis(saved, code, currentUser);
     }

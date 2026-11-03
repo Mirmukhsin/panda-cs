@@ -11,6 +11,13 @@ public record UpdateProfileRequestDto(
 
         @Schema(description = "Steam trade offer URL (optional)", example = "https://steamcommunity.com/tradeoffer/new/?partner=12345678&token=abcdefgh")
         @Size(max = 255, message = "Trade URL cannot exceed 255 characters")
-        String tradeUrl
+        String tradeUrl,
+
+        @Schema(description = "Avatar image URL (optional)", example = "https://example.com/avatar.png")
+        @Size(max = 512, message = "Avatar URL cannot exceed 512 characters")
+        String avatarUrl
 ) {
+    public UpdateProfileRequestDto(String username, String tradeUrl) {
+        this(username, tradeUrl, null);
+    }
 }

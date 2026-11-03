@@ -123,7 +123,7 @@ class MatchAnalysisServiceTest {
         assertThat(result.status()).isEqualTo(MatchStatus.COMPLETED);
 
         // New submission - auto transitions to COMPLETED via deterministic fallback
-        SubmitMatchRequestDto newReq = new SubmitMatchRequestDto("CSGO-NEW-CODE", "https://demo.url");
+        SubmitMatchRequestDto newReq = new SubmitMatchRequestDto("CSGO-NEW-CODE", null);
         when(matchAnalysisRepository.findByShareCode("CSGO-NEW-CODE")).thenReturn(Optional.empty());
         when(matchAnalysisRepository.findByShareSlug(any())).thenReturn(Optional.empty());
         when(matchAnalysisRepository.save(any(MatchAnalysisEntity.class))).thenAnswer(i -> {
@@ -146,6 +146,24 @@ class MatchAnalysisServiceTest {
         assertThat(newResult.teamAPlayers()).hasSize(5);
         assertThat(newResult.teamBPlayers()).hasSize(5);
         assertThat(newResult.totalRounds()).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("submitMatchForAnalysis with demoUrl should keep match QUEUED for worker demo parser")
+    void shouldQueueMatchWhenDemoUrlProvided() {
+        SubmitMatchRequestDto demoReq = new SubmitMatchRequestDto("CSGO-DEMO-CODE", "https://demos.cs2hub.com/match.dem");
+        when(matchAnalysisRepository.findByShareCode("CSGO-DEMO-CODE")).thenReturn(Optional.empty());
+        when(matchAnalysisRepository.findByShareSlug(any())).thenReturn(Optional.empty());
+        when(matchAnalysisRepository.save(any(MatchAnalysisEntity.class))).thenAnswer(i -> {
+            MatchAnalysisEntity e = i.getArgument(0);
+            if (e.getId() == null) e.setId(UUID.randomUUID());
+            if (e.getPlayers() == null) e.setPlayers(new ArrayList<>());
+            return e;
+        });
+
+        MatchAnalysisDetailDto result = service.submitMatchForAnalysis(demoReq, Optional.empty());
+        assertThat(result.status()).isEqualTo(MatchStatus.QUEUED);
+        assertThat(result.demoUrl()).isEqualTo("https://demos.cs2hub.com/match.dem");
     }
 
     @Test

@@ -102,6 +102,23 @@ class CatalogSyncServiceTest {
     }
 
     @Test
+    @DisplayName("CatalogSyncService should respect syncImagesOnStartup configuration")
+    void shouldRespectSyncImagesOnStartup() {
+        assertThat(catalogSyncService.isSyncImagesOnStartup()).isFalse();
+
+        CatalogSyncService enabledSyncService = new CatalogSyncService(
+                skinRepository,
+                stickerRepository,
+                null,
+                objectMapper,
+                "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json",
+                "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/stickers.json",
+                true
+        );
+        assertThat(enabledSyncService.isSyncImagesOnStartup()).isTrue();
+    }
+
+    @Test
     @DisplayName("SkinEntity recalculateLowestPrice should correctly detect the minimum price among wear grades")
     void shouldCalculateLowestPriceCorrectly() {
         SkinEntity skin = SkinEntity.builder()
