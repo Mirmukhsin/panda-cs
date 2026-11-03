@@ -63,6 +63,11 @@ public class UserService {
             user.setTradeUrl(trimmedTradeUrl.isEmpty() ? null : trimmedTradeUrl);
         }
 
+        if (request.avatarUrl() != null) {
+            String trimmedAvatarUrl = request.avatarUrl().trim();
+            user.setAvatarUrl(trimmedAvatarUrl.isEmpty() ? null : trimmedAvatarUrl);
+        }
+
         user = userRepository.save(user);
         return steamAuthService.toUserProfileDto(user);
     }
