@@ -91,15 +91,28 @@ class MatchAnalysisServiceTest {
     }
 
     @Test
-    @DisplayName("submitMatchForAnalysis should queue match or return existing if already submitted")
+    @DisplayName("submitMatchForAnalysis should complete match deterministically or return existing if already completed")
     void shouldSubmitMatchIdempotently() {
         SubmitMatchRequestDto request = new SubmitMatchRequestDto("CSGO-EXISTING-CODE", null);
+
+        MatchPlayerEntity samplePlayer = MatchPlayerEntity.builder()
+                .id(UUID.randomUUID())
+                .steamId("76561198000000001")
+                .playerName("s1mple")
+                .teamSide(MatchTeamSide.TEAM_A)
+                .kills(20)
+                .deaths(10)
+                .adr(90.0)
+                .impactRating(1.2)
+                .awards(new ArrayList<>())
+                .build();
 
         MatchAnalysisEntity existing = MatchAnalysisEntity.builder()
                 .id(UUID.randomUUID())
                 .shareCode("CSGO-EXISTING-CODE")
                 .status(MatchStatus.COMPLETED)
                 .shareSlug("EXIST123")
+                .players(new ArrayList<>(List.of(samplePlayer)))
                 .createdAt(Instant.now())
                 .build();
 
@@ -107,26 +120,101 @@ class MatchAnalysisServiceTest {
 
         MatchAnalysisDetailDto result = service.submitMatchForAnalysis(request, Optional.empty());
         assertThat(result.shareSlug()).isEqualTo("EXIST123");
+        assertThat(result.status()).isEqualTo(MatchStatus.COMPLETED);
 
-        // New submission
+        // New submission - auto transitions to COMPLETED via deterministic fallback
         SubmitMatchRequestDto newReq = new SubmitMatchRequestDto("CSGO-NEW-CODE", "https://demo.url");
         when(matchAnalysisRepository.findByShareCode("CSGO-NEW-CODE")).thenReturn(Optional.empty());
         when(matchAnalysisRepository.findByShareSlug(any())).thenReturn(Optional.empty());
         when(matchAnalysisRepository.save(any(MatchAnalysisEntity.class))).thenAnswer(i -> {
             MatchAnalysisEntity e = i.getArgument(0);
-            return MatchAnalysisEntity.builder()
-                    .id(UUID.randomUUID())
-                    .shareCode(e.getShareCode())
-                    .demoUrl(e.getDemoUrl())
-                    .status(e.getStatus())
-                    .shareSlug(e.getShareSlug())
-                    .createdAt(Instant.now())
-                    .build();
+            if (e.getId() == null) e.setId(UUID.randomUUID());
+            if (e.getPlayers() == null) e.setPlayers(new ArrayList<>());
+            return e;
         });
 
+        AwardBadgeDto fallbackBadge = new AwardBadgeDto(
+                "SOLID_SOLDIER", "Solid Soldier", BadgeCategory.FLEX, "🎖️", "Solid play"
+        );
+        when(roastBadgeEngine.evaluatePlayer(any(), anyInt())).thenReturn(
+                new PlayerEvaluationResult("Solid Soldier", "Clocked in, clocked out.", List.of(fallbackBadge))
+        );
+
         MatchAnalysisDetailDto newResult = service.submitMatchForAnalysis(newReq, Optional.empty());
-        assertThat(newResult.status()).isEqualTo(MatchStatus.QUEUED);
+        assertThat(newResult.status()).isEqualTo(MatchStatus.COMPLETED);
         assertThat(newResult.shareSlug()).hasSize(8);
+        assertThat(newResult.teamAPlayers()).hasSize(5);
+        assertThat(newResult.teamBPlayers()).hasSize(5);
+        assertThat(newResult.totalRounds()).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("getMatchByIdOrSlug should auto-parse QUEUED match to COMPLETED")
+    void shouldAutoParseQueuedMatchOnGet() {
+        UUID matchId = UUID.randomUUID();
+        MatchAnalysisEntity queued = MatchAnalysisEntity.builder()
+                .id(matchId)
+                .shareCode("CSGO-QUEUED-PENDING")
+                .status(MatchStatus.QUEUED)
+                .shareSlug("QUEUED01")
+                .players(new ArrayList<>())
+                .createdAt(Instant.now())
+                .build();
+
+        when(matchAnalysisRepository.findByShareSlug("QUEUED01")).thenReturn(Optional.of(queued));
+        when(matchAnalysisRepository.save(any(MatchAnalysisEntity.class))).thenAnswer(i -> i.getArgument(0));
+
+        AwardBadgeDto fallbackBadge = new AwardBadgeDto(
+                "SOLID_SOLDIER", "Solid Soldier", BadgeCategory.FLEX, "🎖️", "Solid play"
+        );
+        when(roastBadgeEngine.evaluatePlayer(any(), anyInt())).thenReturn(
+                new PlayerEvaluationResult("Solid Soldier", "Clocked in, clocked out.", List.of(fallbackBadge))
+        );
+
+        MatchAnalysisDetailDto result = service.getMatchByIdOrSlug("QUEUED01");
+
+        assertThat(result.status()).isEqualTo(MatchStatus.COMPLETED);
+        assertThat(result.teamAPlayers()).hasSize(5);
+        assertThat(result.teamBPlayers()).hasSize(5);
+        assertThat(result.totalRounds()).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("deterministic simulation should yield identical match results for the same share code")
+    void shouldProduceDeterministicOutputForSameShareCode() {
+        String testCode = "CSGO-TEST-DETERMINISTIC-12345";
+
+        MatchAnalysisEntity match1 = MatchAnalysisEntity.builder()
+                .id(UUID.randomUUID())
+                .shareCode(testCode)
+                .status(MatchStatus.QUEUED)
+                .shareSlug("DET11111")
+                .players(new ArrayList<>())
+                .createdAt(Instant.now())
+                .build();
+
+        MatchAnalysisEntity match2 = MatchAnalysisEntity.builder()
+                .id(UUID.randomUUID())
+                .shareCode(testCode)
+                .status(MatchStatus.QUEUED)
+                .shareSlug("DET22222")
+                .players(new ArrayList<>())
+                .createdAt(Instant.now())
+                .build();
+
+        when(matchAnalysisRepository.save(any(MatchAnalysisEntity.class))).thenAnswer(i -> i.getArgument(0));
+        when(roastBadgeEngine.evaluatePlayer(any(), anyInt())).thenReturn(
+                new PlayerEvaluationResult("Solid Soldier", "Clocked in, clocked out.", List.of())
+        );
+
+        MatchAnalysisDetailDto r1 = service.populateDeterministicAnalysis(match1, testCode, Optional.empty());
+        MatchAnalysisDetailDto r2 = service.populateDeterministicAnalysis(match2, testCode, Optional.empty());
+
+        assertThat(r1.mapName()).isEqualTo(r2.mapName());
+        assertThat(r1.teamAScore()).isEqualTo(r2.teamAScore());
+        assertThat(r1.teamBScore()).isEqualTo(r2.teamBScore());
+        assertThat(r1.totalRounds()).isEqualTo(r2.totalRounds());
+        assertThat(r1.durationSeconds()).isEqualTo(r2.durationSeconds());
     }
 
     @Test
@@ -225,18 +313,6 @@ class MatchAnalysisServiceTest {
             MatchAnalysisEntity e = i.getArgument(0);
             if (e.getId() == null) e.setId(UUID.randomUUID());
             return e;
-        });
-
-        when(matchAnalysisRepository.findById(any())).thenAnswer(i -> {
-            UUID id = i.getArgument(0);
-            return Optional.of(MatchAnalysisEntity.builder()
-                    .id(id)
-                    .shareCode("CSGO-SIM")
-                    .status(MatchStatus.PARSING)
-                    .shareSlug("SIM12345")
-                    .players(new ArrayList<>())
-                    .createdAt(Instant.now())
-                    .build());
         });
 
         when(roastBadgeEngine.evaluatePlayer(any(), anyInt())).thenReturn(
