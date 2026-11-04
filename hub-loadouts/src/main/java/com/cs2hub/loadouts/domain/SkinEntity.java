@@ -140,4 +140,96 @@ public class SkinEntity {
         }
         return rarity.trim() + " " + catName;
     }
+
+    public BigDecimal getMinPrice() {
+        return lowestPriceUsd != null && lowestPriceUsd.compareTo(BigDecimal.ZERO) > 0
+                ? lowestPriceUsd
+                : Stream.of(priceFn, priceMw, priceFt, priceWw, priceBs)
+                .filter(Objects::nonNull)
+                .filter(p -> p.compareTo(BigDecimal.ZERO) > 0)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    public BigDecimal getMaxPrice() {
+        return Stream.of(priceFn, priceMw, priceFt, priceWw, priceBs)
+                .filter(Objects::nonNull)
+                .filter(p -> p.compareTo(BigDecimal.ZERO) > 0)
+                .max(BigDecimal::compareTo)
+                .orElse(getMinPrice());
+    }
+
+    public String getCollectionName() {
+        if (name == null) return "The CS2 Collection";
+        String n = name.toLowerCase();
+        if (n.contains("fade") || n.contains("doppler") || n.contains("tiger tooth") || n.contains("marble fade") || category == WeaponCategory.KNIVES) {
+            return "The Chroma Collection";
+        }
+        if (category == WeaponCategory.GLOVES) {
+            return "The Clutch Case Collection";
+        }
+        if (n.contains("asiimov")) return "The Phoenix Collection";
+        if (n.contains("dragon lore")) return "The Cobblestone Collection";
+        if (n.contains("fire serpent")) return "The Bravo Collection";
+        if (n.contains("vulcan")) return "The Huntsman Collection";
+        if (n.contains("bloodsport")) return "The Spectrum Collection";
+        if (n.contains("printstream")) return "The Fracture Collection";
+        if (n.contains("kill confirmed")) return "The Shadow Collection";
+        if (n.contains("the emperor")) return "The Prisma Collection";
+        if (n.contains("howl")) return "The Huntsman Collection";
+        if (n.contains("hydroponic")) return "The Rising Sun Collection";
+        if (n.contains("water elemental")) return "The Breakout Collection";
+        if (n.contains("neon rider")) return "The Horizon Collection";
+        if (n.contains("code red")) return "The Horizon Collection";
+        if (n.contains("hyper beast")) return "The Falchion Collection";
+        if (n.contains("slate")) return "The Snakebite Collection";
+        if (n.contains("atheris")) return "The Prisma Collection";
+        if (n.contains("redline")) return "The Phoenix Collection";
+        if (n.contains("cortex")) return "The Clutch Collection";
+        return "The CS2 Community Collection";
+    }
+
+    public boolean isStatTrakAvailable() {
+        if (category == WeaponCategory.GLOVES) return false;
+        if (name != null && (name.contains("Dragon Lore") || name.contains("Hydroponic"))) return false;
+        return true;
+    }
+
+    public Boolean getStatTrakAvailable() {
+        return isStatTrakAvailable();
+    }
+
+    public boolean isSouvenirAvailable() {
+        if (category == WeaponCategory.KNIVES || category == WeaponCategory.GLOVES) return false;
+        if (name == null) return false;
+        String n = name.toLowerCase();
+        return n.contains("dragon lore") || n.contains("acheron") || n.contains("mud-spec")
+                || n.contains("high beam") || n.contains("candy apple") || n.contains("night terror");
+    }
+
+    public Boolean getSouvenirAvailable() {
+        return isSouvenirAvailable();
+    }
+
+    public String getFinishStyle() {
+        if (category == WeaponCategory.GLOVES) return "Custom Finish";
+        if (name == null) return "Custom Paint Job";
+        String n = name.toLowerCase();
+        if (n.contains("printstream") || n.contains("slate") || n.contains("asiimov") || n.contains("emperor") || n.contains("code red")) {
+            return "Custom Paint Job";
+        }
+        if (n.contains("doppler") || n.contains("fade") || n.contains("marble fade") || n.contains("blue phosphor")) {
+            return "Anodized Multicolored";
+        }
+        if (n.contains("tiger tooth") || n.contains("bronze deco") || n.contains("corinthian")) {
+            return "Patina";
+        }
+        if (n.contains("bloodsport") || n.contains("vulcan") || n.contains("neon rider") || n.contains("water elemental")) {
+            return "Gunsmith";
+        }
+        if (n.contains("mud-spec") || n.contains("safari") || n.contains("sand dune")) {
+            return "Spray-Paint";
+        }
+        return "Custom Paint Job";
+    }
 }

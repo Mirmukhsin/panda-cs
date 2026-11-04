@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,12 +47,26 @@ public class AdminAccountInitializer {
             }
         }
 
-        // 2. Upsert clutch_admin
-        UserEntity adminUser = userRepository.findByUsernameIgnoreCase(ADMIN_USERNAME)
-                .or(() -> userRepository.findByEmailIgnoreCase(ADMIN_EMAIL))
-                .orElseGet(() -> UserEntity.builder()
-                        .id(UUID.randomUUID())
-                        .build());
+        // 2. Upsert clutch_admin (defensively handling any dirty database duplicate states)
+        UserEntity adminUser;
+        try {
+            adminUser = userRepository.findByUsernameIgnoreCase(ADMIN_USERNAME)
+                    .or(() -> userRepository.findByEmailIgnoreCase(ADMIN_EMAIL))
+                    .orElseGet(() -> UserEntity.builder()
+                            .id(UUID.randomUUID())
+                            .build());
+        } catch (IncorrectResultSizeDataAccessException e) {
+            log.warn("Multiple admin candidates found. Deduplicating database records...");
+            List<UserEntity> candidates = userRepository.findAll().stream()
+                    .filter(u -> ADMIN_USERNAME.equalsIgnoreCase(u.getUsername())
+                            || (u.getEmail() != null && ADMIN_EMAIL.equalsIgnoreCase(u.getEmail())))
+                    .toList();
+            adminUser = candidates.getFirst();
+            for (int i = 1; i < candidates.size(); i++) {
+                log.warn("Deleting duplicate admin record with id={}", candidates.get(i).getId());
+                userRepository.delete(candidates.get(i));
+            }
+        }
 
         adminUser.setUsername(ADMIN_USERNAME);
         adminUser.setEmail(ADMIN_EMAIL);

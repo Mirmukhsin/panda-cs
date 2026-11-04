@@ -697,9 +697,50 @@ public class CatalogSyncService {
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-knife-butterfly-fade.png",
                         0.00, 0.08, bd(3200.00), bd(2800.00), null, null, null),
 
+                createSkin("skin-knife-m9-tiger-tooth", "M9 Bayonet | Tiger Tooth", "weapon_knife_m9_bayonet", "M9 Bayonet", WeaponCategory.KNIVES, TeamSide.BOTH, "Covert", SkinColor.YELLOW, SkinColor.GOLD,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-knife-m9-bayonet-tiger-tooth.png",
+                        0.00, 0.08, bd(1100.00), bd(950.00), null, null, null),
+
+                createSkin("skin-knife-talon-marble-fade", "Talon Knife | Marble Fade", "weapon_knife_widowmaker", "Talon Knife", WeaponCategory.KNIVES, TeamSide.BOTH, "Covert", SkinColor.BLUE, SkinColor.RED,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-knife-talon-marble-fade.png",
+                        0.00, 0.08, bd(1050.00), bd(900.00), null, null, null),
+
                 createSkin("skin-gloves-sport-vice", "Sport Gloves | Vice", "weapon_gloves_sport", "Sport Gloves", WeaponCategory.GLOVES, TeamSide.BOTH, "Extraordinary", SkinColor.PINK, SkinColor.BLUE,
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-gloves-sport-vice.png",
-                        0.06, 0.80, bd(18000.00), bd(6500.00), bd(2200.00), bd(1400.00), bd(900.00))
+                        0.06, 0.80, bd(18000.00), bd(6500.00), bd(2200.00), bd(1400.00), bd(900.00)),
+
+                createSkin("skin-gloves-specialist-crimson-web", "Specialist Gloves | Crimson Web", "weapon_gloves_specialist", "Specialist Gloves", WeaponCategory.GLOVES, TeamSide.BOTH, "Extraordinary", SkinColor.RED, SkinColor.BLACK,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-gloves-specialist-crimson-web.png",
+                        0.06, 0.80, bd(4500.00), bd(1800.00), bd(480.00), bd(320.00), bd(210.00)),
+
+                createSkin("skin-gloves-driver-king-snake", "Driver Gloves | King Snake", "weapon_gloves_driver", "Driver Gloves", WeaponCategory.GLOVES, TeamSide.BOTH, "Extraordinary", SkinColor.WHITE, SkinColor.BLACK,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-gloves-driver-king-snake.png",
+                        0.06, 0.80, bd(6800.00), bd(2200.00), bd(750.00), bd(420.00), bd(280.00)),
+
+                // Additional Iconic SMGs & Rifles
+                createSkin("skin-p90-asiimov", "P90 | Asiimov", "weapon_p90", "P90", WeaponCategory.SMGS, TeamSide.BOTH, "Covert", SkinColor.ORANGE, SkinColor.WHITE,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-p90-asiimov.png",
+                        0.00, 0.92, bd(42.00), bd(18.00), bd(9.50), bd(7.50), bd(6.00)),
+
+                createSkin("skin-mp7-bloodsport", "MP7 | Bloodsport", "weapon_mp7", "MP7", WeaponCategory.SMGS, TeamSide.BOTH, "Covert", SkinColor.RED, SkinColor.WHITE,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-mp7-bloodsport.png",
+                        0.00, 0.65, bd(18.00), bd(9.00), bd(5.50), bd(4.50), bd(4.00)),
+
+                createSkin("skin-ump45-primal-saber", "UMP-45 | Primal Saber", "weapon_ump45", "UMP-45", WeaponCategory.SMGS, TeamSide.BOTH, "Classified", SkinColor.BLACK, SkinColor.WHITE,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ump45-primal-saber.png",
+                        0.00, 0.77, bd(12.00), bd(6.50), bd(3.80), bd(3.20), bd(2.80)),
+
+                createSkin("skin-ak47-case-hardened", "AK-47 | Case Hardened", "weapon_ak47", "AK-47", WeaponCategory.RIFLES, TeamSide.T, "Classified", SkinColor.BLUE, SkinColor.YELLOW,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ak47-case-hardened.png",
+                        0.00, 1.00, bd(650.00), bd(420.00), bd(280.00), bd(230.00), bd(190.00)),
+
+                createSkin("skin-ak47-gold-arabesque", "AK-47 | Gold Arabesque", "weapon_ak47", "AK-47", WeaponCategory.RIFLES, TeamSide.T, "Covert", SkinColor.GOLD, SkinColor.YELLOW,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ak47-gold-arabesque.png",
+                        0.00, 0.70, bd(3500.00), bd(2400.00), bd(1800.00), bd(1500.00), bd(1200.00)),
+
+                createSkin("skin-awp-gungnir", "AWP | Gungnir", "weapon_awp", "AWP", WeaponCategory.RIFLES, TeamSide.BOTH, "Covert", SkinColor.BLUE, SkinColor.WHITE,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-awp-gungnir.png",
+                        0.00, 0.60, bd(14000.00), bd(9800.00), bd(7500.00), bd(6200.00), bd(5100.00))
         );
     }
 

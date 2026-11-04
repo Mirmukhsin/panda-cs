@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-@Schema(description = "Weapon skin catalog item")
+@Schema(description = "Weapon skin catalog item enriched with csgoskins.gg market metadata")
 public record SkinDto(
         @Schema(description = "Unique skin identifier", example = "skin-ak47-asiimov")
         String id,
@@ -66,9 +66,30 @@ public record SkinDto(
         BigDecimal priceBs,
 
         @Schema(description = "Lowest available wear price in USD", example = "28.00")
-        BigDecimal lowestPriceUsd
+        BigDecimal lowestPriceUsd,
+
+        @Schema(description = "CS:GO/CS2 Collection name", example = "The Phoenix Collection")
+        String collectionName,
+
+        @Schema(description = "Minimum price across all wears in USD", example = "28.00")
+        BigDecimal minPrice,
+
+        @Schema(description = "Maximum price across all wears in USD", example = "150.00")
+        BigDecimal maxPrice,
+
+        @Schema(description = "Whether StatTrak variant is available for this skin", example = "true")
+        Boolean statTrakAvailable,
+
+        @Schema(description = "Whether Souvenir variant is available for this skin", example = "false")
+        Boolean souvenirAvailable,
+
+        @Schema(description = "Paint/finish style", example = "Custom Paint Job")
+        String finishStyle
 ) implements Serializable {
 
+    /**
+     * Backward-compatible 17-parameter constructor for existing tests and consumers.
+     */
     public SkinDto(
             String id,
             String name,
@@ -108,7 +129,13 @@ public record SkinDto(
                 priceFt,
                 priceWw,
                 priceBs,
-                lowestPriceUsd
+                lowestPriceUsd,
+                "The CS2 Collection",
+                lowestPriceUsd,
+                priceFn != null ? priceFn : lowestPriceUsd,
+                true,
+                false,
+                "Custom Paint Job"
         );
     }
 
@@ -132,7 +159,13 @@ public record SkinDto(
                 entity.getPriceFt(),
                 entity.getPriceWw(),
                 entity.getPriceBs(),
-                entity.getLowestPriceUsd()
+                entity.getLowestPriceUsd(),
+                entity.getCollectionName(),
+                entity.getMinPrice(),
+                entity.getMaxPrice(),
+                entity.isStatTrakAvailable(),
+                entity.isSouvenirAvailable(),
+                entity.getFinishStyle()
         );
     }
 }

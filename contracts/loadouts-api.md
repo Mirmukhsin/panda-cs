@@ -398,3 +398,88 @@ Deletes a loadout. Permitted only if the caller is the author or has `ADMIN` rol
 - `POST /api/v1/loadouts/admin/seed`: Seeds database with 33 curated skins and 10 iconic tournament stickers.
 - `POST /api/v1/loadouts/admin/sync`: Synchronizes latest skin and sticker metadata from `ByMykel/CSGO-API`.
 - Requires `ADMIN` role.
+
+
+---
+
+## 5. Events, Giveaways & Deals Hub (EventsController)
+
+Base path: /api/v1/events
+
+### GET /api/v1/events/hub
+Retrieves aggregated CS2 events, 5 active skin/wallet giveaways, 8+ curated market discount deals, and special tournament/drop events.
+
+**Headers (Optional):**
+- Authorization: Bearer <JWT>: Authenticated user tracking
+- X-Guest-Session-Id: <string>: Guest tracking for entry status
+
+**Response 200 OK:**
+``json
+{
+  "success": true,
+  "message": "Success",
+  "data": {
+    "giveaways": [
+      {
+        "id": "giveaway-ak47-bloodsport",
+        "title": "AK-47 | Bloodsport (Factory New)",
+        "valueUsd": 145.00,
+        "rarity": "Covert",
+        "imageUrl": "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ak47-bloodsport.png",
+        "endsAt": "2026-11-07T12:00:00Z",
+        "totalEntries": 1240,
+        "entered": false
+      }
+    ],
+    "discounts": [
+      {
+        "id": "deal-1",
+        "title": "M4A4 | The Emperor (Field-Tested)",
+        "originalPrice": 25.00,
+        "salePrice": 18.75,
+        "discountPercent": 25,
+        "source": "Skinport",
+        "imageUrl": "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-m4a4-the-emperor.png",
+        "storeUrl": "https://skinport.com/item/cs2/m4a4-the-emperor"
+      }
+    ],
+    "specialEvents": [
+      {
+        "id": "event-shanghai-major",
+        "title": "Perfect World Shanghai Major 2024",
+        "eventType": "MAJOR",
+        "description": "The pinnacle CS2 championship featuring 24 top global squads battling for Major glory and Pick'Em trophies.",
+        "startDate": "2026-11-01T00:00:00Z",
+        "endDate": "2026-12-15T00:00:00Z",
+        "prizePool": ",250,000 USD",
+        "location": "Shanghai, China",
+        "bannerUrl": "https://...",
+        "actionUrl": "https://store.steampowered.com/app/730/CounterStrike_2/"
+      }
+    ]
+  },
+  "timestamp": "2026-11-04T12:00:00Z"
+}
+``
+
+### POST /api/v1/events/giveaways/{id}/enter
+Atomically enters user or guest into the specified giveaway and increments the entry count.
+
+**Headers (Optional):**
+- Authorization: Bearer <JWT>
+- X-Guest-Session-Id: <string>
+
+**Response 200 OK:**
+``json
+{
+  "success": true,
+  "message": "Success",
+  "data": {
+    "giveawayId": "giveaway-ak47-bloodsport",
+    "totalEntries": 1241,
+    "entered": true,
+    "message": "Entry recorded successfully!"
+  },
+  "timestamp": "2026-11-04T12:00:00Z"
+}
+``

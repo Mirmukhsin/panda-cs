@@ -41,9 +41,55 @@ public record GeneratedLoadoutItemDto(
         SkinColor primaryColor,
 
         @Schema(description = "Skin image preview URL")
-        String imageUrl
+        String imageUrl,
+
+        @Schema(description = "CS:GO/CS2 Collection name", example = "The Phoenix Collection")
+        String collectionName,
+
+        @Schema(description = "Whether StatTrak variant is available for this skin", example = "true")
+        Boolean statTrakAvailable,
+
+        @Schema(description = "Paint/finish style", example = "Custom Paint Job")
+        String finishStyle
 ) implements Serializable {
 
+    /**
+     * Backward-compatible 11-argument constructor.
+     */
+    public GeneratedLoadoutItemDto(
+            WeaponSlot slot,
+            String weaponId,
+            String weaponName,
+            String skinId,
+            String skinName,
+            String rarity,
+            String skinClass,
+            WearCondition wearCondition,
+            BigDecimal priceUsd,
+            SkinColor primaryColor,
+            String imageUrl
+    ) {
+        this(
+                slot,
+                weaponId,
+                weaponName,
+                skinId,
+                skinName,
+                rarity,
+                skinClass,
+                wearCondition,
+                priceUsd,
+                primaryColor,
+                imageUrl,
+                "The CS2 Collection",
+                true,
+                "Custom Paint Job"
+        );
+    }
+
+    /**
+     * Backward-compatible 9-argument constructor.
+     */
     public GeneratedLoadoutItemDto(
             WeaponSlot slot,
             String weaponId,
@@ -55,6 +101,21 @@ public record GeneratedLoadoutItemDto(
             SkinColor primaryColor,
             String imageUrl
     ) {
-        this(slot, weaponId, weaponName, skinId, skinName, null, null, wearCondition, priceUsd, primaryColor, imageUrl);
+        this(
+                slot,
+                weaponId,
+                weaponName,
+                skinId,
+                skinName,
+                null,
+                null,
+                wearCondition,
+                priceUsd,
+                primaryColor,
+                imageUrl,
+                "The CS2 Collection",
+                true,
+                "Custom Paint Job"
+        );
     }
 }

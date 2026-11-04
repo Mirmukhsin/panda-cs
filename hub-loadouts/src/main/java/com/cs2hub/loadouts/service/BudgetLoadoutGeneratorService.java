@@ -276,7 +276,10 @@ public class BudgetLoadoutGeneratorService {
                         s.wear,
                         s.price,
                         s.skin.getPrimaryColor(),
-                        s.skin.getImageUrl()
+                        s.skin.getImageUrl(),
+                        s.skin.getCollectionName(),
+                        s.skin.isStatTrakAvailable(),
+                        s.skin.getFinishStyle()
                 ))
                 .toList();
 
