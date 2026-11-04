@@ -50,17 +50,17 @@ class SteamAuthServiceTest {
     void setUp() {
         jwtTokenProvider = new JwtTokenProvider(
                 "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
-                604800000L
+                3600000L
         );
         objectMapper = new ObjectMapper();
 
-        RestClient.Builder builder = RestClient.builder();
-        mockServer = MockRestServiceServer.bindTo(builder).build();
+        RestClient.Builder restClientBuilder = RestClient.builder();
+        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
 
         steamAuthService = new SteamAuthService(
                 userRepository,
                 jwtTokenProvider,
-                builder,
+                restClientBuilder,
                 objectMapper,
                 "TEST_STEAM_API_KEY",
                 "http://localhost:8080",
@@ -75,7 +75,7 @@ class SteamAuthServiceTest {
     void shouldBuildLoginRedirectUrl() {
         String url = steamAuthService.buildLoginRedirectUrl();
 
-        assertThat(url).startsWith("https://steamcommunity.com/openid/login");
+        assertThat(url).startsWith(SteamAuthService.STEAM_OPENID_URL);
         assertThat(url).contains("openid.ns=http://specs.openid.net/auth/2.0");
         assertThat(url).contains("openid.mode=checkid_setup");
         assertThat(url).contains("openid.return_to=http://localhost:8080/api/v1/auth/steam/callback");
@@ -85,15 +85,16 @@ class SteamAuthServiceTest {
     }
 
     @Test
-    @DisplayName("Should execute dev login, upsert user and issue valid JWT")
-    void shouldExecuteDevLogin() {
+    @DisplayName("Should execute dev login for clutch_admin and grant ADMIN role")
+    void shouldExecuteDevLoginForClutchAdmin() {
         DevLoginRequestDto request = new DevLoginRequestDto(
                 "76561198012345678",
-                "m0NESY",
+                "clutch_admin",
                 "ADMIN"
         );
 
         when(userRepository.findBySteamId("76561198012345678")).thenReturn(Optional.empty());
+        when(userRepository.findByUsernameIgnoreCase("clutch_admin")).thenReturn(Optional.empty());
         when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
             UserEntity entity = invocation.getArgument(0);
             if (entity.getId() == null) {
@@ -109,12 +110,41 @@ class SteamAuthServiceTest {
         assertThat(response.accessToken()).isNotBlank();
         assertThat(jwtTokenProvider.validateToken(response.accessToken())).isTrue();
         assertThat(response.user().steamId()).isEqualTo("76561198012345678");
-        assertThat(response.user().username()).isEqualTo("m0NESY");
+        assertThat(response.user().username()).isEqualTo("clutch_admin");
         assertThat(response.user().role()).isEqualTo("ADMIN");
 
         ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
         verify(userRepository).save(captor.capture());
         assertThat(captor.getValue().getRole()).isEqualTo(UserRole.ADMIN);
+    }
+
+    @Test
+    @DisplayName("Should restrict non-clutch_admin user requesting ADMIN role to USER role in dev login")
+    void shouldRestrictNonClutchAdminRequestingAdminRole() {
+        DevLoginRequestDto request = new DevLoginRequestDto(
+                "76561198012345679",
+                "m0NESY",
+                "ADMIN"
+        );
+
+        when(userRepository.findBySteamId("76561198012345679")).thenReturn(Optional.empty());
+        when(userRepository.findByUsernameIgnoreCase("m0NESY")).thenReturn(Optional.empty());
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
+            UserEntity entity = invocation.getArgument(0);
+            if (entity.getId() == null) {
+                entity.setId(UUID.randomUUID());
+            }
+            return entity;
+        });
+
+        AuthTokenResponseDto response = steamAuthService.devLogin(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.user().role()).isEqualTo("USER");
+
+        ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getRole()).isEqualTo(UserRole.USER);
     }
 
     @Test
@@ -300,7 +330,7 @@ class SteamAuthServiceTest {
 
         assertThatThrownBy(() -> steamAuthService.verifyAndAuthenticate(queryParams))
                 .isInstanceOf(BadRequestException.class)
-        .hasMessageContaining("Invalid Steam claimed_id format");
+                .hasMessageContaining("Invalid Steam claimed_id format");
     }
 
     @Test

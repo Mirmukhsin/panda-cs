@@ -32,6 +32,9 @@ public record SkinDto(
         @Schema(description = "Item rarity grade", example = "Covert")
         String rarity,
 
+        @Schema(description = "Skin class designation", example = "Covert Rifle")
+        String skinClass,
+
         @Schema(description = "Primary theme color", example = "ORANGE")
         SkinColor primaryColor,
 
@@ -66,6 +69,49 @@ public record SkinDto(
         BigDecimal lowestPriceUsd
 ) implements Serializable {
 
+    public SkinDto(
+            String id,
+            String name,
+            String weaponId,
+            String weaponName,
+            WeaponCategory category,
+            TeamSide teamSide,
+            String rarity,
+            SkinColor primaryColor,
+            SkinColor secondaryColor,
+            String imageUrl,
+            Double minFloat,
+            Double maxFloat,
+            BigDecimal priceFn,
+            BigDecimal priceMw,
+            BigDecimal priceFt,
+            BigDecimal priceWw,
+            BigDecimal priceBs,
+            BigDecimal lowestPriceUsd
+    ) {
+        this(
+                id,
+                name,
+                weaponId,
+                weaponName,
+                category,
+                teamSide,
+                rarity,
+                (rarity != null && !rarity.isBlank() ? rarity : "Covert") + " " + (category == WeaponCategory.PISTOLS ? "Pistol" : "Rifle"),
+                primaryColor,
+                secondaryColor,
+                imageUrl,
+                minFloat,
+                maxFloat,
+                priceFn,
+                priceMw,
+                priceFt,
+                priceWw,
+                priceBs,
+                lowestPriceUsd
+        );
+    }
+
     public static SkinDto fromEntity(SkinEntity entity) {
         return new SkinDto(
                 entity.getId(),
@@ -75,6 +121,7 @@ public record SkinDto(
                 entity.getCategory(),
                 entity.getTeamSide(),
                 entity.getRarity(),
+                entity.getSkinClass(),
                 entity.getPrimaryColor(),
                 entity.getSecondaryColor(),
                 entity.getImageUrl(),

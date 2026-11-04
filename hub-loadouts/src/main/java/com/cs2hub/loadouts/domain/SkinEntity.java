@@ -125,4 +125,19 @@ public class SkinEntity {
         BigDecimal exact = getExactPriceForCondition(condition);
         return exact != null ? exact : lowestPriceUsd;
     }
+
+    public String getSkinClass() {
+        String catName = switch (category != null ? category : WeaponCategory.RIFLES) {
+            case RIFLES -> "Rifle";
+            case PISTOLS -> "Pistol";
+            case SMGS -> "SMG";
+            case HEAVY -> "Heavy";
+            case KNIVES -> "Knife";
+            case GLOVES -> "Glove";
+        };
+        if (rarity == null || rarity.isBlank()) {
+            return catName;
+        }
+        return rarity.trim() + " " + catName;
+    }
 }

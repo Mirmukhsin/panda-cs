@@ -25,6 +25,12 @@ public record GeneratedLoadoutItemDto(
         @Schema(description = "Skin display name", example = "AK-47 | Redline")
         String skinName,
 
+        @Schema(description = "Skin rarity grade", example = "Classified")
+        String rarity,
+
+        @Schema(description = "Skin class designation", example = "Classified Rifle")
+        String skinClass,
+
         @Schema(description = "Selected wear condition", example = "FIELD_TESTED")
         WearCondition wearCondition,
 
@@ -36,4 +42,19 @@ public record GeneratedLoadoutItemDto(
 
         @Schema(description = "Skin image preview URL")
         String imageUrl
-) implements Serializable {}
+) implements Serializable {
+
+    public GeneratedLoadoutItemDto(
+            WeaponSlot slot,
+            String weaponId,
+            String weaponName,
+            String skinId,
+            String skinName,
+            WearCondition wearCondition,
+            BigDecimal priceUsd,
+            SkinColor primaryColor,
+            String imageUrl
+    ) {
+        this(slot, weaponId, weaponName, skinId, skinName, null, null, wearCondition, priceUsd, primaryColor, imageUrl);
+    }
+}

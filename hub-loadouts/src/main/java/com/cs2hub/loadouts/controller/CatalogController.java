@@ -39,7 +39,7 @@ public class CatalogController {
 
     @Operation(
             summary = "Search and filter weapon skins",
-            description = "Returns a paginated list of CS2 weapon skins filtered by color theme, weapon, category, team side, max price, or search text."
+            description = "Returns a paginated list of CS2 weapon skins filtered by color theme, weapon, category, team side, max price, rarity, skin class, or search text."
     )
     @ApiResponses({
             @ApiResponse(
@@ -68,6 +68,12 @@ public class CatalogController {
             @Parameter(description = "Free-text search query matching skin display name")
             @RequestParam(required = false) String q,
 
+            @Parameter(description = "Item rarity grade filter (e.g. Covert, Classified, Restricted, Mil-Spec Grade)")
+            @RequestParam(required = false) String rarity,
+
+            @Parameter(description = "Skin class filter (e.g. COVERT_RIFLE, CLASSIFIED_PISTOL, ALL_COVERT)")
+            @RequestParam(required = false) String skinClass,
+
             @Parameter(description = "Zero-based page index (defaults to 0)")
             @RequestParam(defaultValue = "0") int page,
 
@@ -78,8 +84,24 @@ public class CatalogController {
             @RequestParam(defaultValue = "lowestPriceUsd,asc") String sort
     ) {
         Pageable pageable = createPageable(page, size, sort, "lowestPriceUsd");
-        Page<SkinDto> results = catalogService.searchSkins(color, weaponId, category, teamSide, maxPrice, q, pageable);
+        Page<SkinDto> results = (rarity != null || skinClass != null)
+                ? catalogService.searchSkins(color, weaponId, category, teamSide, maxPrice, q, rarity, skinClass, pageable)
+                : catalogService.searchSkins(color, weaponId, category, teamSide, maxPrice, q, pageable);
         return ResponseEntity.ok(ApiResponseDto.ok(results));
+    }
+
+    public ResponseEntity<ApiResponseDto<Page<SkinDto>>> searchSkins(
+            SkinColor color,
+            String weaponId,
+            WeaponCategory category,
+            TeamSide teamSide,
+            BigDecimal maxPrice,
+            String q,
+            int page,
+            int size,
+            String sort
+    ) {
+        return searchSkins(color, weaponId, category, teamSide, maxPrice, q, null, null, page, size, sort);
     }
 
     @Operation(

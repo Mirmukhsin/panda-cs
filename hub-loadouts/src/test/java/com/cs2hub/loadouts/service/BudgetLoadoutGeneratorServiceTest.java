@@ -40,6 +40,14 @@ class BudgetLoadoutGeneratorServiceTest {
             WeaponCategory category, TeamSide teamSide, SkinColor color,
             BigDecimal fn, BigDecimal mw, BigDecimal ft, BigDecimal ww, BigDecimal bs
     ) {
+        return mockSkin(id, name, weaponId, weaponName, category, teamSide, "Covert", color, fn, mw, ft, ww, bs);
+    }
+
+    private SkinEntity mockSkin(
+            String id, String name, String weaponId, String weaponName,
+            WeaponCategory category, TeamSide teamSide, String rarity, SkinColor color,
+            BigDecimal fn, BigDecimal mw, BigDecimal ft, BigDecimal ww, BigDecimal bs
+    ) {
         SkinEntity skin = SkinEntity.builder()
                 .id(id)
                 .name(name)
@@ -47,7 +55,7 @@ class BudgetLoadoutGeneratorServiceTest {
                 .weaponName(weaponName)
                 .category(category)
                 .teamSide(teamSide)
-                .rarity("Covert")
+                .rarity(rarity)
                 .primaryColor(color)
                 .imageUrl("https://example.com/" + id + ".png")
                 .priceFn(fn)
@@ -63,64 +71,68 @@ class BudgetLoadoutGeneratorServiceTest {
     private void setupMockWeapons() {
         // AK-47
         SkinEntity akRedline = mockSkin("skin-ak-redline", "AK-47 | Redline", "weapon_ak47", "AK-47",
-                WeaponCategory.RIFLES, TeamSide.T, SkinColor.RED,
+                WeaponCategory.RIFLES, TeamSide.T, "Classified", SkinColor.RED,
                 null, new BigDecimal("35.00"), new BigDecimal("18.50"), new BigDecimal("16.00"), new BigDecimal("14.00"));
 
         SkinEntity akSlate = mockSkin("skin-ak-slate", "AK-47 | Slate", "weapon_ak47", "AK-47",
-                WeaponCategory.RIFLES, TeamSide.T, SkinColor.BLACK,
+                WeaponCategory.RIFLES, TeamSide.T, "Restricted", SkinColor.BLACK,
                 new BigDecimal("14.50"), new BigDecimal("7.80"), new BigDecimal("4.20"), new BigDecimal("3.50"), new BigDecimal("2.90"));
 
-        when(skinRepository.findAllByWeaponId("weapon_ak47")).thenReturn(List.of(akRedline, akSlate));
+        SkinEntity akAsiimov = mockSkin("skin-ak-asiimov", "AK-47 | Asiimov", "weapon_ak47", "AK-47",
+                WeaponCategory.RIFLES, TeamSide.T, "Covert", SkinColor.ORANGE,
+                new BigDecimal("120.00"), new BigDecimal("65.00"), new BigDecimal("35.00"), new BigDecimal("28.00"), new BigDecimal("22.00"));
+
+        when(skinRepository.findAllByWeaponId("weapon_ak47")).thenReturn(List.of(akRedline, akSlate, akAsiimov));
 
         // M4A1-S
         SkinEntity m4Cyrex = mockSkin("skin-m4-cyrex", "M4A1-S | Cyrex", "weapon_m4a1_silencer", "M4A1-S",
-                WeaponCategory.RIFLES, TeamSide.CT, SkinColor.RED,
+                WeaponCategory.RIFLES, TeamSide.CT, "Covert", SkinColor.RED,
                 new BigDecimal("55.00"), new BigDecimal("32.00"), new BigDecimal("20.00"), new BigDecimal("18.00"), new BigDecimal("16.00"));
 
         when(skinRepository.findAllByWeaponId("weapon_m4a1_silencer")).thenReturn(List.of(m4Cyrex));
 
         // AWP
         SkinEntity awpWildfire = mockSkin("skin-awp-wildfire", "AWP | Wildfire", "weapon_awp", "AWP",
-                WeaponCategory.RIFLES, TeamSide.BOTH, SkinColor.RED,
+                WeaponCategory.RIFLES, TeamSide.BOTH, "Covert", SkinColor.RED,
                 new BigDecimal("180.00"), new BigDecimal("105.00"), new BigDecimal("60.00"), new BigDecimal("50.00"), new BigDecimal("42.00"));
 
         SkinEntity awpAtheris = mockSkin("skin-awp-atheris", "AWP | Atheris", "weapon_awp", "AWP",
-                WeaponCategory.RIFLES, TeamSide.BOTH, SkinColor.GREEN,
+                WeaponCategory.RIFLES, TeamSide.BOTH, "Restricted", SkinColor.GREEN,
                 new BigDecimal("18.00"), new BigDecimal("8.00"), new BigDecimal("4.50"), new BigDecimal("3.80"), new BigDecimal("3.20"));
 
         when(skinRepository.findAllByWeaponId("weapon_awp")).thenReturn(List.of(awpWildfire, awpAtheris));
 
         // Glock
         SkinEntity glockWater = mockSkin("skin-glock-water", "Glock-18 | Water Elemental", "weapon_glock", "Glock-18",
-                WeaponCategory.PISTOLS, TeamSide.T, SkinColor.RED,
+                WeaponCategory.PISTOLS, TeamSide.T, "Classified", SkinColor.RED,
                 new BigDecimal("16.00"), new BigDecimal("11.00"), new BigDecimal("7.50"), new BigDecimal("7.00"), new BigDecimal("6.50"));
 
         when(skinRepository.findAllByWeaponId("weapon_glock")).thenReturn(List.of(glockWater));
 
         // USP-S
         SkinEntity uspsTicket = mockSkin("skin-usps-ticket", "USP-S | Ticket to Hell", "weapon_usp_silencer", "USP-S",
-                WeaponCategory.PISTOLS, TeamSide.CT, SkinColor.WHITE,
+                WeaponCategory.PISTOLS, TeamSide.CT, "Restricted", SkinColor.WHITE,
                 new BigDecimal("6.00"), new BigDecimal("2.50"), new BigDecimal("1.20"), new BigDecimal("1.00"), new BigDecimal("0.90"));
 
         when(skinRepository.findAllByWeaponId("weapon_usp_silencer")).thenReturn(List.of(uspsTicket));
 
         // Deagle
         SkinEntity deagleCodeRed = mockSkin("skin-deagle-code-red", "Desert Eagle | Code Red", "weapon_deagle", "Desert Eagle",
-                WeaponCategory.PISTOLS, TeamSide.BOTH, SkinColor.RED,
+                WeaponCategory.PISTOLS, TeamSide.BOTH, "Covert", SkinColor.RED,
                 new BigDecimal("85.00"), new BigDecimal("45.00"), new BigDecimal("28.00"), new BigDecimal("24.00"), new BigDecimal("20.00"));
 
         when(skinRepository.findAllByWeaponId("weapon_deagle")).thenReturn(List.of(deagleCodeRed));
 
         // MAC-10
         SkinEntity mac10 = mockSkin("skin-mac10-disco", "MAC-10 | Disco Tech", "weapon_mac10", "MAC-10",
-                WeaponCategory.SMGS, TeamSide.T, SkinColor.PURPLE,
+                WeaponCategory.SMGS, TeamSide.T, "Classified", SkinColor.PURPLE,
                 new BigDecimal("20.00"), new BigDecimal("8.50"), new BigDecimal("4.20"), new BigDecimal("3.50"), new BigDecimal("3.00"));
 
         when(skinRepository.findAllByWeaponId("weapon_mac10")).thenReturn(List.of(mac10));
 
         // MP9
         SkinEntity mp9 = mockSkin("skin-mp9-starlight", "MP9 | Starlight Protector", "weapon_mp9", "MP9",
-                WeaponCategory.SMGS, TeamSide.CT, SkinColor.WHITE,
+                WeaponCategory.SMGS, TeamSide.CT, "Covert", SkinColor.WHITE,
                 new BigDecimal("35.00"), new BigDecimal("16.00"), new BigDecimal("8.50"), new BigDecimal("7.00"), new BigDecimal("6.00"));
 
         when(skinRepository.findAllByWeaponId("weapon_mp9")).thenReturn(List.of(mp9));
@@ -148,6 +160,50 @@ class BudgetLoadoutGeneratorServiceTest {
 
         // Total cost + remaining budget must equal budget limit
         assertThat(result.totalCostUsd().add(result.remainingBudgetUsd())).isEqualByComparingTo(result.budgetLimitUsd());
+    }
+
+    @Test
+    @DisplayName("generateLoadout should populate rarity and skinClass on all returned items")
+    void shouldPopulateRarityAndSkinClassOnAllItems() {
+        setupMockWeapons();
+
+        GenerateLoadoutRequestDto request = new GenerateLoadoutRequestDto(
+                new BigDecimal("100.00"),
+                SkinColor.RED,
+                "weapon_m4a1_silencer",
+                false
+        );
+
+        GeneratedLoadoutResponseDto result = generatorService.generateLoadout(request);
+
+        assertThat(result.items()).isNotEmpty();
+        for (var item : result.items()) {
+            assertThat(item.rarity()).isNotBlank();
+            assertThat(item.skinClass()).isNotBlank();
+            assertThat(item.skinClass()).contains(item.rarity());
+        }
+    }
+
+    @Test
+    @DisplayName("generateLoadout should prioritize requested skinClass for primary slots")
+    void shouldPrioritizeRequestedSkinClass() {
+        setupMockWeapons();
+
+        GenerateLoadoutRequestDto request = new GenerateLoadoutRequestDto(
+                new BigDecimal("120.00"),
+                SkinColor.BLACK,
+                "weapon_m4a1_silencer",
+                false,
+                "RESTRICTED_RIFLE",
+                "Restricted"
+        );
+
+        GeneratedLoadoutResponseDto result = generatorService.generateLoadout(request);
+
+        // T_RIFLE should select Restricted Slate
+        assertThat(result.items()).anyMatch(i -> i.slot() == WeaponSlot.T_RIFLE && i.skinId().equals("skin-ak-slate"));
+        // AWP should select Restricted Atheris
+        assertThat(result.items()).anyMatch(i -> i.slot() == WeaponSlot.AWP && i.skinId().equals("skin-awp-atheris"));
     }
 
     @Test
@@ -194,10 +250,10 @@ class BudgetLoadoutGeneratorServiceTest {
         setupMockWeapons();
 
         SkinEntity uspsCheckEngine = mockSkin("skin-usps-checkengine", "USP-S | Check Engine", "weapon_usp_silencer", "USP-S",
-                WeaponCategory.PISTOLS, TeamSide.CT, SkinColor.RED,
+                WeaponCategory.PISTOLS, TeamSide.CT, "Mil-Spec Grade", SkinColor.RED,
                 new BigDecimal("2.50"), new BigDecimal("1.80"), new BigDecimal("1.20"), new BigDecimal("1.00"), new BigDecimal("0.80"));
         SkinEntity m4NightTerror = mockSkin("skin-m4-nightterror", "M4A1-S | Night Terror", "weapon_m4a1_silencer", "M4A1-S",
-                WeaponCategory.RIFLES, TeamSide.CT, SkinColor.RED,
+                WeaponCategory.RIFLES, TeamSide.CT, "Restricted", SkinColor.RED,
                 new BigDecimal("2.50"), new BigDecimal("1.50"), new BigDecimal("0.90"), new BigDecimal("0.70"), new BigDecimal("0.60"));
 
         when(skinRepository.findAllByWeaponId("weapon_usp_silencer")).thenReturn(List.of(uspsCheckEngine));

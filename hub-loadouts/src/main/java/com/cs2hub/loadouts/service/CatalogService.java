@@ -35,12 +35,26 @@ public class CatalogService {
             TeamSide teamSide,
             BigDecimal maxPrice,
             String query,
+            String rarity,
+            String skinClass,
             Pageable pageable
     ) {
         return skinRepository.findAll(
-                SkinSpecifications.filter(color, weaponId, category, teamSide, maxPrice, query),
+                SkinSpecifications.filter(color, weaponId, category, teamSide, maxPrice, query, rarity, skinClass),
                 pageable
         ).map(SkinDto::fromEntity);
+    }
+
+    public Page<SkinDto> searchSkins(
+            SkinColor color,
+            String weaponId,
+            WeaponCategory category,
+            TeamSide teamSide,
+            BigDecimal maxPrice,
+            String query,
+            Pageable pageable
+    ) {
+        return searchSkins(color, weaponId, category, teamSide, maxPrice, query, null, null, pageable);
     }
 
     public SkinDto getSkinById(String skinId) {

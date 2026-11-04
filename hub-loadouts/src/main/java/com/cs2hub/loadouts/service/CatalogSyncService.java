@@ -473,6 +473,9 @@ public class CatalogSyncService {
                 createSkin("skin-ak47-hydroponic", "AK-47 | Hydroponic", "weapon_ak47", "AK-47", WeaponCategory.RIFLES, TeamSide.T, "Classified", SkinColor.GREEN, SkinColor.WHITE,
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ak47-hydroponic.png",
                         0.00, 0.80, bd(1850.00), bd(1200.00), bd(850.00), bd(650.00), bd(550.00)),
+                createSkin("skin-ak47-frontside-misty", "AK-47 | Frontside Misty", "weapon_ak47", "AK-47", WeaponCategory.RIFLES, TeamSide.T, "Classified", SkinColor.BLUE, SkinColor.WHITE,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ak47-frontside-misty.png",
+                        0.02, 0.87, bd(45.00), bd(25.00), bd(16.00), bd(13.50), bd(11.00)),
 
                 // M4A1-S
                 createSkin("skin-m4a1s-printstream", "M4A1-S | Printstream", "weapon_m4a1_silencer", "M4A1-S", WeaponCategory.RIFLES, TeamSide.CT, "Covert", SkinColor.WHITE, SkinColor.BLACK,
@@ -556,6 +559,9 @@ public class CatalogSyncService {
                 createSkin("skin-awp-wildfire", "AWP | Wildfire", "weapon_awp", "AWP", WeaponCategory.RIFLES, TeamSide.BOTH, "Covert", SkinColor.RED, SkinColor.YELLOW,
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-awp-wildfire.png",
                         0.01, 0.70, bd(180.00), bd(105.00), bd(60.00), bd(50.00), bd(42.00)),
+                createSkin("skin-awp-chromatic-aberration", "AWP | Chromatic Aberration", "weapon_awp", "AWP", WeaponCategory.RIFLES, TeamSide.BOTH, "Classified", SkinColor.PURPLE, SkinColor.PINK,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-awp-chromatic-aberration.png",
+                        0.00, 0.70, bd(38.00), bd(22.00), bd(14.00), bd(12.00), bd(10.50)),
 
                 // USP-S
                 createSkin("skin-usps-kill-confirmed", "USP-S | Kill Confirmed", "weapon_usp_silencer", "USP-S", WeaponCategory.PISTOLS, TeamSide.CT, "Covert", SkinColor.RED, null,
@@ -581,11 +587,17 @@ public class CatalogSyncService {
                 createSkin("skin-usps-ticket-to-hell", "USP-S | Ticket to Hell", "weapon_usp_silencer", "USP-S", WeaponCategory.PISTOLS, TeamSide.CT, "Restricted", SkinColor.WHITE, SkinColor.BLACK,
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-usps-ticket-to-hell.png",
                         0.00, 0.76, bd(6.00), bd(2.50), bd(1.20), bd(1.00), bd(0.90)),
+                createSkin("skin-usps-the-traitor", "USP-S | The Traitor", "weapon_usp_silencer", "USP-S", WeaponCategory.PISTOLS, TeamSide.CT, "Covert", SkinColor.RED, SkinColor.GOLD,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-usps-the-traitor.png",
+                        0.00, 1.00, bd(65.00), bd(32.00), bd(18.00), bd(14.00), bd(12.00)),
 
                 // Glock-18
                 createSkin("skin-glock-water-elemental", "Glock-18 | Water Elemental", "weapon_glock", "Glock-18", WeaponCategory.PISTOLS, TeamSide.T, "Classified", SkinColor.RED, SkinColor.BLUE,
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-glock-water-elemental.png",
                         0.00, 0.70, bd(16.00), bd(11.00), bd(7.50), bd(7.00), bd(6.50)),
+                createSkin("skin-glock-moonrise", "Glock-18 | Moonrise", "weapon_glock", "Glock-18", WeaponCategory.PISTOLS, TeamSide.T, "Restricted", SkinColor.PURPLE, SkinColor.BLUE,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-glock-moonrise.png",
+                        0.00, 0.65, bd(4.50), bd(2.20), bd(1.10), bd(0.90), bd(0.80)),
 
                 createSkin("skin-glock-candy-apple", "Glock-18 | Candy Apple", "weapon_glock", "Glock-18", WeaponCategory.PISTOLS, TeamSide.T, "Mil-Spec Grade", SkinColor.RED, null,
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-glock-candy-apple.png",
@@ -635,6 +647,9 @@ public class CatalogSyncService {
                 createSkin("skin-deagle-ocean-drive", "Desert Eagle | Ocean Drive", "weapon_deagle", "Desert Eagle", WeaponCategory.PISTOLS, TeamSide.BOTH, "Covert", SkinColor.ORANGE, SkinColor.BLUE,
                         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-deagle-ocean-drive.png",
                         0.00, 1.00, bd(110.00), bd(48.00), bd(24.00), bd(18.00), bd(15.00)),
+                createSkin("skin-deagle-mecha-industries", "Desert Eagle | Mecha Industries", "weapon_deagle", "Desert Eagle", WeaponCategory.PISTOLS, TeamSide.BOTH, "Classified", SkinColor.WHITE, SkinColor.BLACK,
+                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-deagle-mecha-industries.png",
+                        0.00, 0.60, bd(12.00), bd(7.50), bd(4.80), bd(4.20), bd(3.80)),
 
                 // SMGs
                 createSkin("skin-mp9-starlight-protector", "MP9 | Starlight Protector", "weapon_mp9", "MP9", WeaponCategory.SMGS, TeamSide.CT, "Covert", SkinColor.WHITE, SkinColor.GOLD,
