@@ -8,7 +8,11 @@ public enum ThrowType {
     STANDING("Standing Throw"),
     RUN_THROW("Running Throw"),
     LEFT_RIGHT_CLICK("Left + Right Click"),
-    CROUCH_THROW("Crouch Throw");
+    CROUCH_THROW("Crouch Throw"),
+    JUMPTHROW("Jump Throw"),
+    RUNNING("Running Throw"),
+    CROUCH("Crouch Throw"),
+    WALK_JUMPTHROW("Walk Jump Throw");
 
     private final String displayName;
 

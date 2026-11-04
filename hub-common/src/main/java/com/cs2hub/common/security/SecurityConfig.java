@@ -71,6 +71,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/loadouts/**").permitAll()
                         // Public loadouts generator endpoint for zero login friction
                         .requestMatchers(HttpMethod.POST, "/api/v1/loadouts/generate").permitAll()
+                        // Events, giveaways and deals hub
+                        .requestMatchers("/api/v1/events/**").permitAll()
                         // Public GET endpoints for stratboard utility lineups and tactics playbooks
                         .requestMatchers(HttpMethod.GET, "/api/v1/stratboard/**").permitAll()
                         // WebSocket STOMP endpoint for real-time collaborative stratboard
