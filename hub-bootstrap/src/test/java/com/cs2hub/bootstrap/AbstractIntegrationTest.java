@@ -83,6 +83,7 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.flyway.schemas", () -> "identity,loadouts,minigames,stratboard,matches");
         registry.add("app.auth.dev-mode-enabled", () -> "true");
         registry.add("app.matches.worker-secret", () -> "dev-worker-secret-key");
+        registry.add("app.keepalive.enabled", () -> "false");
     }
 
     @Autowired
@@ -108,6 +109,6 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected String obtainAdminToken() throws Exception {
-        return obtainToken("76561198000000002", "IntegrationAdmin", "ADMIN");
+        return obtainToken("76561198000000002", "clutch_admin", "ADMIN");
     }
 }

@@ -1,6 +1,7 @@
 package com.cs2hub.identity.repository;
 
 import com.cs2hub.identity.domain.UserEntity;
+import com.cs2hub.identity.domain.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +26,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     boolean existsByUsernameIgnoreCase(String username);
 
     boolean existsByEmailIgnoreCase(String email);
+
+    List<UserEntity> findByRole(UserRole role);
 
     @Query("SELECT u FROM UserEntity u WHERE LOWER(u.username) = LOWER(:usernameOrEmail) OR (u.email IS NOT NULL AND LOWER(u.email) = LOWER(:usernameOrEmail))")
     Optional<UserEntity> findByUsernameOrEmailIgnoreCase(@Param("usernameOrEmail") String usernameOrEmail);

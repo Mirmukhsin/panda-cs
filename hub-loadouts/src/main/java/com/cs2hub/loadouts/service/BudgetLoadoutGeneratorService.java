@@ -48,6 +48,8 @@ public class BudgetLoadoutGeneratorService {
                 : "weapon_m4a1_silencer";
         boolean includeLuxury = Boolean.TRUE.equals(request.includeKnifeAndGloves());
 
+        ParsedClassPreference classPref = parsePreference(request.skinClass(), request.rarity());
+
         List<WeaponSlot> slotsToFill = new ArrayList<>();
         slotsToFill.add(WeaponSlot.T_RIFLE);
         slotsToFill.add(WeaponSlot.CT_RIFLE);
@@ -67,7 +69,7 @@ public class BudgetLoadoutGeneratorService {
         Map<WeaponSlot, List<CandidateOption>> candidatesBySlot = new HashMap<>();
         for (WeaponSlot slot : slotsToFill) {
             String targetWeaponId = resolveWeaponId(slot, preferredCtRifle);
-            candidatesBySlot.put(slot, findCandidatesForSlot(slot, targetWeaponId, themeColor));
+            candidatesBySlot.put(slot, findCandidatesForSlot(slot, targetWeaponId, themeColor, classPref));
         }
 
         List<SelectedSlotState> selectedSlots = new ArrayList<>();
@@ -94,7 +96,8 @@ public class BudgetLoadoutGeneratorService {
                 }
             }
 
-            BigDecimal slotTargetBudget = budgetLimit.multiply(BigDecimal.valueOf(slot.getBudgetWeight()))
+            double slotWeight = getEffectiveWeight(slot, classPref);
+            BigDecimal slotTargetBudget = budgetLimit.multiply(BigDecimal.valueOf(slotWeight))
                     .setScale(2, RoundingMode.HALF_UP);
 
             BigDecimal maxSpendableForThisSlot = remainingBudget.subtract(minReserveForRemaining);
@@ -127,34 +130,48 @@ public class BudgetLoadoutGeneratorService {
 
             final List<CandidateOption> finalAffordable = affordableOptions;
 
-            // Select best candidate from affordable options:
-            // 1. Try matching theme color within slotTargetBudget
-            // 2. Try matching theme color within effectiveCap / remainingBudget (preferring cheaper among matches)
-            // 3. Fall back to best wear / lowest price neutral skin within remainingBudget
+            // Prioritize selecting skins matching the requested rarity/skinClass when available:
+            // 1. Target rarity match + theme color match within slotTargetBudget
+            // 2. Target rarity match within effectiveCap (preferring theme color match, then wear, then lowest price)
+            // 3. Fallback to standard theme color match within slotTargetBudget
+            // 4. Standard theme color match within effectiveCap
+            // 5. Fallback to best wear / lowest price neutral skin
             CandidateOption chosen = finalAffordable.stream()
-                    .filter(c -> c.matchScore() > 0 && c.price().compareTo(targetBudget) <= 0)
+                    .filter(c -> c.rarityMatch() && c.matchScore() > 0 && c.price().compareTo(targetBudget) <= 0)
                     .max(Comparator.comparingInt(CandidateOption::matchScore)
                             .thenComparing(CandidateOption::wearQualityScore)
                             .thenComparing(CandidateOption::price))
                     .orElseGet(() -> finalAffordable.stream()
-                            .filter(c -> c.matchScore() > 0)
+                            .filter(CandidateOption::rarityMatch)
                             .max(Comparator.comparingInt(CandidateOption::matchScore)
                                     .thenComparing(CandidateOption::wearQualityScore)
                                     .thenComparing(c -> c.price().negate()))
                             .orElseGet(() -> finalAffordable.stream()
-                                    .max(Comparator.comparing(CandidateOption::wearQualityScore)
-                                            .thenComparing(c -> c.price().negate()))
-                                    .orElse(finalAffordable.get(0))));
+                                    .filter(c -> c.matchScore() > 0 && c.price().compareTo(targetBudget) <= 0)
+                                    .max(Comparator.comparingInt(CandidateOption::matchScore)
+                                            .thenComparing(CandidateOption::wearQualityScore)
+                                            .thenComparing(CandidateOption::price))
+                                    .orElseGet(() -> finalAffordable.stream()
+                                            .filter(c -> c.matchScore() > 0)
+                                            .max(Comparator.comparingInt(CandidateOption::matchScore)
+                                                    .thenComparing(CandidateOption::wearQualityScore)
+                                                    .thenComparing(c -> c.price().negate()))
+                                            .orElseGet(() -> finalAffordable.stream()
+                                                    .max(Comparator.comparing(CandidateOption::wearQualityScore)
+                                                            .thenComparing(c -> c.price().negate()))
+                                                    .orElse(finalAffordable.get(0))))));
 
-            selectedSlots.add(new SelectedSlotState(slot, chosen.skin(), chosen.wear(), chosen.price()));
+            selectedSlots.add(new SelectedSlotState(slot, chosen.skin(), chosen.wear(), chosen.price(), chosen.rarityMatch()));
             remainingBudget = remainingBudget.subtract(chosen.price());
         }
 
         // Downgrade Pass: Ensure totalCost <= budgetLimit under all circumstances
         while (calculateTotalCost(selectedSlots).compareTo(budgetLimit) > 0) {
+            // First try downgrading non-priority/non-rarity-matched slots with cheaper options
             Optional<SelectedSlotState> slotWithCheaperOption = selectedSlots.stream()
                     .filter(s -> hasCheaperOption(s, candidatesBySlot.get(s.slot)))
-                    .max(Comparator.comparing(s -> s.price));
+                    .min(Comparator.comparing((SelectedSlotState s) -> s.rarityMatch)
+                            .thenComparing(s -> s.price.negate()));
 
             if (slotWithCheaperOption.isPresent()) {
                 SelectedSlotState state = slotWithCheaperOption.get();
@@ -162,13 +179,15 @@ public class BudgetLoadoutGeneratorService {
                 state.skin = cheaper.skin();
                 state.wear = cheaper.wear();
                 state.price = cheaper.price();
+                state.rarityMatch = cheaper.rarityMatch();
             } else {
                 // Never drop down to 0 items! If only 1 slot remains, stop dropping
                 if (selectedSlots.size() <= 1) {
                     break;
                 }
                 Optional<SelectedSlotState> lowestPrioritySlot = selectedSlots.stream()
-                        .min(Comparator.comparingDouble(s -> s.slot.getBudgetWeight()));
+                        .min(Comparator.comparing((SelectedSlotState s) -> s.rarityMatch)
+                                .thenComparingDouble(s -> getEffectiveWeight(s.slot, classPref)));
                 if (lowestPrioritySlot.isPresent()) {
                     selectedSlots.remove(lowestPrioritySlot.get());
                 } else {
@@ -185,21 +204,22 @@ public class BudgetLoadoutGeneratorService {
 
                 Optional<CandidateOption> budgetFit = candidates.stream()
                         .filter(c -> c.price().compareTo(budgetLimit) <= 0)
-                        .max(Comparator.comparingInt(CandidateOption::matchScore)
+                        .max(Comparator.comparing((CandidateOption c) -> c.rarityMatch())
+                                .thenComparingInt(CandidateOption::matchScore)
                                 .thenComparing(CandidateOption::wearQualityScore)
                                 .thenComparing(c -> c.price().negate()));
 
                 if (budgetFit.isPresent()) {
                     CandidateOption chosen = budgetFit.get();
-                    selectedSlots.add(new SelectedSlotState(slot, chosen.skin(), chosen.wear(), chosen.price()));
+                    selectedSlots.add(new SelectedSlotState(slot, chosen.skin(), chosen.wear(), chosen.price(), chosen.rarityMatch()));
                     remainingBudget = budgetLimit.subtract(chosen.price());
                     break;
                 }
             }
         }
 
-        // Pass 2: Budget Optimization & Wear Upgrades
-        // Use any remaining budget to upgrade wear condition or skin tier
+        // Pass 2: Budget Optimization & Wear / Tier Upgrades
+        // Use any remaining budget to upgrade skin tier or wear condition
         boolean upgraded;
         do {
             upgraded = false;
@@ -210,20 +230,22 @@ public class BudgetLoadoutGeneratorService {
                 break;
             }
 
-            // Prioritize upgrading in order: AWP, T_RIFLE, CT_RIFLE, DEAGLE, PISTOLS, SMGS
+            // Prioritize upgrading in order: primary slots (especially target category) first
             List<SelectedSlotState> upgradeCandidates = new ArrayList<>(selectedSlots);
-            upgradeCandidates.sort(Comparator.comparingDouble((SelectedSlotState s) -> s.slot.getBudgetWeight()).reversed());
+            upgradeCandidates.sort(Comparator.comparingDouble((SelectedSlotState s) -> getEffectiveWeight(s.slot, classPref)).reversed());
 
             for (SelectedSlotState state : upgradeCandidates) {
                 List<CandidateOption> candidates = candidatesBySlot.get(state.slot);
                 if (candidates == null) continue;
 
-                // Find a strictly better option
+                // Find a strictly better option: prefer rarity match, then wear, then price
                 Optional<CandidateOption> bestUpgrade = candidates.stream()
                         .filter(c -> c.price().compareTo(state.price) > 0)
                         .filter(c -> c.price().subtract(state.price).compareTo(currentRemaining) <= 0)
                         .filter(c -> c.matchScore() >= state.getMatchScore(themeColor))
-                        .max(Comparator.comparing(CandidateOption::wearQualityScore)
+                        .filter(c -> !state.rarityMatch || c.rarityMatch()) // don't downgrade rarity match
+                        .max(Comparator.comparing((CandidateOption c) -> c.rarityMatch() && !state.rarityMatch)
+                                .thenComparing(CandidateOption::wearQualityScore)
                                 .thenComparing(CandidateOption::price));
 
                 if (bestUpgrade.isPresent()) {
@@ -231,6 +253,7 @@ public class BudgetLoadoutGeneratorService {
                     state.skin = upgrade.skin();
                     state.wear = upgrade.wear();
                     state.price = upgrade.price();
+                    state.rarityMatch = upgrade.rarityMatch();
                     upgraded = true;
                     break; // re-evaluate remaining budget
                 }
@@ -248,6 +271,8 @@ public class BudgetLoadoutGeneratorService {
                         s.skin.getWeaponName(),
                         s.skin.getId(),
                         s.skin.getName(),
+                        s.skin.getRarity(),
+                        s.skin.getSkinClass(),
                         s.wear,
                         s.price,
                         s.skin.getPrimaryColor(),
@@ -256,6 +281,27 @@ public class BudgetLoadoutGeneratorService {
                 .toList();
 
         return new GeneratedLoadoutResponseDto(themeColor, budgetLimit, totalCost, finalRemaining, items);
+    }
+
+    private double getEffectiveWeight(WeaponSlot slot, ParsedClassPreference pref) {
+        if (pref.targetCategory() == WeaponCategory.RIFLES) {
+            return switch (slot) {
+                case T_RIFLE, CT_RIFLE -> 0.32;
+                case AWP -> 0.24;
+                case T_PISTOL, CT_PISTOL, DEAGLE -> 0.035;
+                case T_SMG, CT_SMG -> 0.0075;
+                default -> slot.getBudgetWeight();
+            };
+        } else if (pref.targetCategory() == WeaponCategory.PISTOLS) {
+            return switch (slot) {
+                case T_PISTOL, CT_PISTOL, DEAGLE -> 0.22;
+                case T_RIFLE, CT_RIFLE -> 0.12;
+                case AWP -> 0.06;
+                case T_SMG, CT_SMG -> 0.02;
+                default -> slot.getBudgetWeight();
+            };
+        }
+        return slot.getBudgetWeight();
     }
 
     private BigDecimal calculateTotalCost(List<SelectedSlotState> slots) {
@@ -291,7 +337,12 @@ public class BudgetLoadoutGeneratorService {
         return slot.getDefaultWeaponId();
     }
 
-    private List<CandidateOption> findCandidatesForSlot(WeaponSlot slot, String weaponId, SkinColor themeColor) {
+    private List<CandidateOption> findCandidatesForSlot(
+            WeaponSlot slot,
+            String weaponId,
+            SkinColor themeColor,
+            ParsedClassPreference pref
+    ) {
         List<SkinEntity> skins;
         if (slot.getCategory() == WeaponCategory.KNIVES || slot.getCategory() == WeaponCategory.GLOVES) {
             skins = skinRepository.findAllByCategory(slot.getCategory());
@@ -314,23 +365,97 @@ public class BudgetLoadoutGeneratorService {
                 matchScore = 1;
             }
 
+            boolean rarityMatch = isTargetMatch(skin, slot, pref);
+
             for (WearCondition wear : WEAR_QUALITY_ORDER) {
                 BigDecimal price = skin.getExactPriceForCondition(wear);
                 if (price != null && price.compareTo(BigDecimal.ZERO) > 0) {
-                    options.add(new CandidateOption(skin, wear, price, matchScore));
+                    options.add(new CandidateOption(skin, wear, price, matchScore, rarityMatch));
                 }
             }
         }
 
-        // Sort candidates: highest match score first, then wear quality, then price ascending
-        options.sort(Comparator.comparingInt(CandidateOption::matchScore).reversed()
+        // Sort candidates: rarity match first, then theme color match score, wear quality, price
+        options.sort(Comparator.comparing((CandidateOption c) -> c.rarityMatch())
+                .thenComparingInt(CandidateOption::matchScore)
+                .reversed()
                 .thenComparing(CandidateOption::wearQualityScore, Comparator.reverseOrder())
                 .thenComparing(CandidateOption::price));
 
         return options;
     }
 
-    private record CandidateOption(SkinEntity skin, WearCondition wear, BigDecimal price, int matchScore) {
+    private boolean isTargetMatch(SkinEntity skin, WeaponSlot slot, ParsedClassPreference pref) {
+        if (pref.targetRarity() == null) return false;
+        if (!pref.applyToAllSlots() && pref.targetCategory() != null && slot.getCategory() != pref.targetCategory()) {
+            return false;
+        }
+        return matchesRarity(skin.getRarity(), pref.targetRarity());
+    }
+
+    private boolean matchesRarity(String skinRarity, String targetRarity) {
+        if (skinRarity == null || targetRarity == null) return false;
+        String s = skinRarity.replaceAll("[^a-zA-Z]", "").toLowerCase();
+        String t = targetRarity.replaceAll("[^a-zA-Z]", "").toLowerCase();
+        return s.contains(t) || t.contains(s);
+    }
+
+    private ParsedClassPreference parsePreference(String skinClass, String rarity) {
+        String targetRarity = null;
+        WeaponCategory targetCategory = null;
+        boolean allSlots = false;
+
+        if (StringUtils.hasText(skinClass)) {
+            String sc = skinClass.trim().toUpperCase().replace("-", "_").replace(" ", "_");
+            if (sc.startsWith("ALL_")) {
+                allSlots = true;
+                String r = sc.substring(4);
+                if (r.contains("COVERT")) targetRarity = "Covert";
+                else if (r.contains("CLASSIFIED")) targetRarity = "Classified";
+                else if (r.contains("RESTRICTED")) targetRarity = "Restricted";
+                else if (r.contains("MIL_SPEC") || r.contains("MILSPEC")) targetRarity = "Mil-Spec Grade";
+            } else {
+                if (sc.contains("RIFLE")) {
+                    targetCategory = WeaponCategory.RIFLES;
+                } else if (sc.contains("PISTOL")) {
+                    targetCategory = WeaponCategory.PISTOLS;
+                } else if (sc.contains("SMG")) {
+                    targetCategory = WeaponCategory.SMGS;
+                }
+
+                if (sc.contains("COVERT")) {
+                    targetRarity = "Covert";
+                } else if (sc.contains("CLASSIFIED")) {
+                    targetRarity = "Classified";
+                } else if (sc.contains("RESTRICTED")) {
+                    targetRarity = "Restricted";
+                } else if (sc.contains("MIL_SPEC") || sc.contains("MILSPEC")) {
+                    targetRarity = "Mil-Spec Grade";
+                }
+            }
+        }
+
+        if (targetRarity == null && StringUtils.hasText(rarity)) {
+            String r = rarity.trim().toUpperCase().replace("-", "_").replace(" ", "_");
+            if (r.contains("COVERT")) targetRarity = "Covert";
+            else if (r.contains("CLASSIFIED")) targetRarity = "Classified";
+            else if (r.contains("RESTRICTED")) targetRarity = "Restricted";
+            else if (r.contains("MIL_SPEC") || r.contains("MILSPEC")) targetRarity = "Mil-Spec Grade";
+            else targetRarity = rarity.trim();
+        }
+
+        return new ParsedClassPreference(targetRarity, targetCategory, allSlots);
+    }
+
+    private record ParsedClassPreference(String targetRarity, WeaponCategory targetCategory, boolean applyToAllSlots) {}
+
+    private record CandidateOption(
+            SkinEntity skin,
+            WearCondition wear,
+            BigDecimal price,
+            int matchScore,
+            boolean rarityMatch
+    ) {
         public int wearQualityScore() {
             return switch (wear) {
                 case FN -> 5;
@@ -347,12 +472,14 @@ public class BudgetLoadoutGeneratorService {
         private SkinEntity skin;
         private WearCondition wear;
         private BigDecimal price;
+        private boolean rarityMatch;
 
-        public SelectedSlotState(WeaponSlot slot, SkinEntity skin, WearCondition wear, BigDecimal price) {
+        public SelectedSlotState(WeaponSlot slot, SkinEntity skin, WearCondition wear, BigDecimal price, boolean rarityMatch) {
             this.slot = slot;
             this.skin = skin;
             this.wear = wear;
             this.price = price;
+            this.rarityMatch = rarityMatch;
         }
 
         public int getMatchScore(SkinColor themeColor) {

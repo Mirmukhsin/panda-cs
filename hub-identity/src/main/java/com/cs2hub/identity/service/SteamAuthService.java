@@ -127,10 +127,19 @@ public class SteamAuthService {
             }
         }
 
+        if (role == UserRole.ADMIN && !"clutch_admin".equalsIgnoreCase(request.username())) {
+            log.warn("Non-clutch_admin user '{}' requested ADMIN role in dev login. Restricting to USER.", request.username());
+            role = UserRole.USER;
+        }
+
         final UserRole finalRole = role;
         UserEntity user = userRepository.findBySteamId(request.steamId())
+                .or(() -> userRepository.findByUsernameIgnoreCase(request.username()))
                 .map(existing -> {
                     existing.setUsername(request.username());
+                    if (existing.getSteamId() == null && request.steamId() != null) {
+                        existing.setSteamId(request.steamId());
+                    }
                     existing.setRole(finalRole);
                     return existing;
                 })
@@ -173,42 +182,35 @@ public class SteamAuthService {
             throw ex;
         } catch (Exception ex) {
             log.error("Failed communicating with Steam OpenID server: {}", ex.getMessage());
-            throw new UnauthorizedException("Failed communicating with Steam authentication server");
+            throw new UnauthorizedException("Could not verify OpenID ticket with Steam: " + ex.getMessage());
         }
     }
 
     public SteamProfileSummary fetchSteamProfileSummary(String steamId) {
-        // Step A: Steam Web API (if api-key is configured and non-blank)
+        // Step A: Attempt Steam Web API if API key is provided
         if (StringUtils.hasText(apiKey)) {
             try {
-                String url = UriComponentsBuilder.fromHttpUrl("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/")
+                String apiUrl = UriComponentsBuilder.fromHttpUrl("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/")
                         .queryParam("key", apiKey)
                         .queryParam("steamids", steamId)
                         .toUriString();
 
-                String responseJson = restClient.get()
-                        .uri(url)
+                String jsonResponse = restClient.get()
+                        .uri(apiUrl)
                         .accept(MediaType.APPLICATION_JSON)
                         .retrieve()
                         .body(String.class);
 
-                if (StringUtils.hasText(responseJson)) {
-                    JsonNode root = objectMapper.readTree(responseJson);
+                if (StringUtils.hasText(jsonResponse)) {
+                    JsonNode root = objectMapper.readTree(jsonResponse);
                     JsonNode players = root.path("response").path("players");
                     if (players.isArray() && !players.isEmpty()) {
-                        JsonNode player = players.get(0);
-                        String personaName = player.path("personaname").asText(null);
-                        String avatarFull = player.path("avatarfull").asText(null);
-                        String profileUrl = player.path("profileurl").asText(null);
-
-                        if (StringUtils.hasText(personaName)) {
-                            log.info("Resolved Steam profile for {} via Steam Web API: nickname='{}'", steamId, personaName);
-                            return new SteamProfileSummary(
-                                    personaName,
-                                    StringUtils.hasText(avatarFull) ? avatarFull : DEFAULT_AVATAR_URL,
-                                    StringUtils.hasText(profileUrl) ? profileUrl : defaultProfileUrl(steamId)
-                            );
-                        }
+                        JsonNode p = players.get(0);
+                        String personaname = p.path("personaname").asText(defaultUsername(steamId));
+                        String avatarfull = p.path("avatarfull").asText(DEFAULT_AVATAR_URL);
+                        String profileurl = p.path("profileurl").asText(defaultProfileUrl(steamId));
+                        log.info("Resolved real Steam profile for {} via Web API: nickname='{}'", steamId, personaname);
+                        return new SteamProfileSummary(personaname, avatarfull, profileurl);
                     }
                 }
             } catch (Exception ex) {
@@ -216,7 +218,7 @@ public class SteamAuthService {
             }
         }
 
-        // Step B (Zero-Key Automatic Fallback): Steam Public Community XML endpoint
+        // Step B: Public XML Fallback: https://steamcommunity.com/profiles/{steamId}/?xml=1
         try {
             String xmlUrl = "https://steamcommunity.com/profiles/" + steamId + "/?xml=1";
             String responseXml = restClient.get()

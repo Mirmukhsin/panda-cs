@@ -71,6 +71,32 @@ class CatalogControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/loadouts/catalog/skins with rarity and skinClass should query service and return 200")
+    void shouldSearchSkinsWithRarityAndSkinClassSuccessfully() {
+        SkinDto skin = new SkinDto(
+                "skin-ak47-asiimov", "AK-47 | Asiimov", "weapon_ak47", "AK-47",
+                WeaponCategory.RIFLES, TeamSide.T, "Covert", SkinColor.ORANGE, SkinColor.WHITE,
+                "https://example.com/asiimov.png", 0.05, 0.70,
+                new BigDecimal("150.00"), new BigDecimal("85.00"), new BigDecimal("45.00"),
+                new BigDecimal("35.00"), new BigDecimal("28.00"), new BigDecimal("28.00")
+        );
+        Page<SkinDto> pagedResult = new PageImpl<>(List.of(skin), PageRequest.of(0, 20), 1);
+
+        when(catalogService.searchSkins(eq(SkinColor.ORANGE), eq("weapon_ak47"), eq(WeaponCategory.RIFLES),
+                eq(TeamSide.T), any(), any(), eq("Covert"), eq("COVERT_RIFLE"), any(Pageable.class)))
+                .thenReturn(pagedResult);
+
+        ResponseEntity<ApiResponseDto<Page<SkinDto>>> response = catalogController.searchSkins(
+                SkinColor.ORANGE, "weapon_ak47", WeaponCategory.RIFLES, TeamSide.T, null, null,
+                "Covert", "COVERT_RIFLE", 0, 20, "lowestPriceUsd,asc"
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().data().getContent().get(0).skinClass()).contains("Rifle");
+    }
+
+    @Test
     @DisplayName("GET /api/v1/loadouts/catalog/skins/{skinId} should return 200 when skin exists")
     void shouldGetSkinByIdSuccessfully() {
         SkinDto skin = new SkinDto(
@@ -120,5 +146,15 @@ class CatalogControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().data().getContent()).hasSize(1);
         assertThat(response.getBody().data().getContent().get(0).name()).isEqualTo("Sticker | Howling Dawn");
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/loadouts/catalog/stickers/{stickerId} should throw ResourceNotFoundException when missing")
+    void shouldThrowNotFoundForMissingSticker() {
+        when(catalogService.getStickerById("unknown-sticker")).thenThrow(new ResourceNotFoundException("Sticker not found with ID: unknown-sticker"));
+
+        assertThatThrownBy(() -> catalogController.getStickerById("unknown-sticker"))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Sticker not found with ID: unknown-sticker");
     }
 }

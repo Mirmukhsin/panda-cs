@@ -23,5 +23,21 @@ public record GenerateLoadoutRequestDto(
         String preferredCtRifle,
 
         @Schema(description = "Whether to attempt including luxury knife and gloves slots if budget allows", example = "false")
-        Boolean includeKnifeAndGloves
-) implements Serializable {}
+        Boolean includeKnifeAndGloves,
+
+        @Schema(description = "Skin class preference (e.g. COVERT_RIFLE, CLASSIFIED_RIFLE, ALL_COVERT)", example = "COVERT_RIFLE")
+        String skinClass,
+
+        @Schema(description = "Item rarity grade preference (e.g. Covert, Classified, Restricted, Mil-Spec Grade)", example = "Covert")
+        String rarity
+) implements Serializable {
+
+    public GenerateLoadoutRequestDto(
+            BigDecimal budgetUsd,
+            SkinColor themeColor,
+            String preferredCtRifle,
+            Boolean includeKnifeAndGloves
+    ) {
+        this(budgetUsd, themeColor, preferredCtRifle, includeKnifeAndGloves, null, null);
+    }
+}
