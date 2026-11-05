@@ -75,7 +75,8 @@ public class TacticService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tactic not found with ID: " + tacticId));
 
         boolean isOwner = entity.getAuthorUserId().equals(currentUser.userId());
-        boolean isAdmin = currentUser.isAdmin();
+//        boolean isAdmin = currentUser.isAdmin();
+        boolean isAdmin = false;
 
         if (!isOwner && !isAdmin) {
             throw new UnauthorizedException("You are not authorized to edit this tactic");
