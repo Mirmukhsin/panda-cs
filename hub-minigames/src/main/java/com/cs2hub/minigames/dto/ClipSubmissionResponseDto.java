@@ -20,8 +20,8 @@ public record ClipSubmissionResponseDto(
         @Schema(description = "Video streaming / playback URL", example = "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         String videoUrl,
 
-        @Schema(description = "Detected video streaming provider", example = "YOUTUBE")
-        VideoProvider videoProvider,
+//        @Schema(description = "Detected video streaming provider", example = "YOUTUBE")
+//        VideoProvider videoProvider,
 
         @Schema(description = "Map played in clip", example = "de_mirage")
         String mapName,

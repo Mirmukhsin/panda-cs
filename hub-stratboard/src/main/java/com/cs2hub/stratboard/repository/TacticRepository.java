@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
+//@Repository
 public interface TacticRepository extends JpaRepository<TacticEntity, UUID>, JpaSpecificationExecutor<TacticEntity> {
 
     Optional<TacticEntity> findByShareCode(String shareCode);
