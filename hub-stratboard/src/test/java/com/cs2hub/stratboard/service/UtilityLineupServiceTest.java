@@ -26,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,34 +45,94 @@ class UtilityLineupServiceTest {
     }
 
     @Test
-    @DisplayName("Startup seeder should populate curated lineups when database is empty")
+    @DisplayName("Startup seeder should populate 36 curated lineups when database count is less than 30")
     void shouldSeedLineupsWhenEmpty() {
         when(utilityLineupRepository.count()).thenReturn(0L);
 
-        service.onStartup();
+        service.autoSeedLineupsIfEmpty();
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<UtilityLineupEntity>> captor = ArgumentCaptor.forClass(List.class);
         verify(utilityLineupRepository).saveAll(captor.capture());
 
         List<UtilityLineupEntity> savedList = captor.getValue();
-        assertThat(savedList).hasSizeGreaterThanOrEqualTo(16);
+        assertThat(savedList).hasSize(36);
         assertThat(savedList).allMatch(UtilityLineupEntity::getIsVerified);
     }
 
     @Test
-    @DisplayName("Startup seeder should skip seeding when lineups already exist")
+    @DisplayName("Startup seeder should skip seeding when lineups count is 30 or greater")
     void shouldSkipSeedingWhenNotEmpty() {
-        when(utilityLineupRepository.count()).thenReturn(18L);
+        when(utilityLineupRepository.count()).thenReturn(36L);
 
-        service.onStartup();
+        service.autoSeedLineupsIfEmpty();
 
         verify(utilityLineupRepository, never()).saveAll(any());
     }
 
     @Test
-    @DisplayName("getLineups should query repository with specifications and return DTOs")
-    void shouldGetLineups() {
+    @DisplayName("getLineups should normalize map names so INFERNO and de_inferno return identical results")
+    void shouldReturnSameResultsForMapNameNormalization() {
+        UtilityLineupEntity entity = UtilityLineupEntity.builder()
+                .id(UUID.fromString("b0000000-0000-0000-0000-000000000007"))
+                .mapName("de_inferno")
+                .utilityType(UtilityType.SMOKE)
+                .teamSide(StratSide.T)
+                .title("Inferno: Banana \u2192 Coffins Smoke")
+                .throwType(ThrowType.STANDING)
+                .standX(32.5)
+                .standY(65.2)
+                .landX(25.1)
+                .landY(35.4)
+                .videoUrl("https://www.youtube.com/watch?v=3JZ_D3ELwOQ")
+                .description("Coffins smoke")
+                .isVerified(true)
+                .createdAt(Instant.now())
+                .build();
+
+        when(utilityLineupRepository.findByMapNameNormalized(org.mockito.ArgumentMatchers.argThat(
+                arg -> arg != null && (arg.equalsIgnoreCase("inferno") || arg.equalsIgnoreCase("de_inferno"))
+        ))).thenReturn(List.of(entity));
+
+        List<UtilityLineupDto> resultUpper = service.getLineups("INFERNO", null);
+        List<UtilityLineupDto> resultPrefixed = service.getLineups("de_inferno", null);
+
+        assertThat(resultUpper).isNotEmpty();
+        assertThat(resultPrefixed).isNotEmpty();
+        assertThat(resultUpper).isEqualTo(resultPrefixed);
+    }
+
+    @Test
+    @DisplayName("getLineups with map and utilityType should query normalized repository method")
+    void shouldGetLineupsWithNormalizedMapAndUtilityType() {
+        UtilityLineupEntity entity = UtilityLineupEntity.builder()
+                .id(UUID.fromString("b0000000-0000-0000-0000-000000000007"))
+                .mapName("de_inferno")
+                .utilityType(UtilityType.SMOKE)
+                .teamSide(StratSide.T)
+                .title("Inferno: Banana \u2192 Coffins Smoke")
+                .throwType(ThrowType.STANDING)
+                .standX(32.5)
+                .standY(65.2)
+                .landX(25.1)
+                .landY(35.4)
+                .videoUrl("https://www.youtube.com/watch?v=3JZ_D3ELwOQ")
+                .description("Coffins smoke")
+                .isVerified(true)
+                .createdAt(Instant.now())
+                .build();
+
+        when(utilityLineupRepository.findByMapNameNormalizedAndUtilityType("inferno", UtilityType.SMOKE))
+                .thenReturn(List.of(entity));
+
+        List<UtilityLineupDto> results = service.getLineups("INFERNO", UtilityType.SMOKE);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).title()).isEqualTo("Inferno: Banana \u2192 Coffins Smoke");
+    }
+
+    @Test
+    @DisplayName("getLineups should query repository with specifications when teamSide is provided")
+    void shouldGetLineupsWithTeamSide() {
         UtilityLineupEntity entity = UtilityLineupEntity.builder()
                 .id(UUID.randomUUID())
                 .mapName("de_mirage")

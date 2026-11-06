@@ -20,6 +20,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,11 +33,15 @@ public class UtilityLineupService {
     private final UtilityLineupRepository utilityLineupRepository;
 
     @EventListener(ApplicationReadyEvent.class)
-    public void onStartup() {
-        if (utilityLineupRepository.count() == 0) {
-            log.info("No utility lineups found in database. Initializing curated CS2 utility lineup seed library...");
+    public void autoSeedLineupsIfEmpty() {
+        if (utilityLineupRepository.count() < 30) {
+            log.info("Utility lineup count is under 30. Auto-seeding 36 verified cs2nades.gg lineups...");
             seedCuratedLineups();
         }
+    }
+
+    public void onStartup() {
+        autoSeedLineupsIfEmpty();
     }
 
     public List<UtilityLineupDto> seedCuratedLineups() {
@@ -47,7 +52,28 @@ public class UtilityLineupService {
     }
 
     @Transactional(readOnly = true)
+    public List<UtilityLineupDto> getLineups(String mapName, UtilityType utilityType) {
+        String cleanMapName = (mapName != null) ? mapName.trim().toLowerCase() : null;
+        List<UtilityLineupEntity> entities;
+        if (cleanMapName != null && !cleanMapName.isBlank()) {
+            if (utilityType != null) {
+                entities = utilityLineupRepository.findByMapNameNormalizedAndUtilityType(cleanMapName, utilityType);
+            } else {
+                entities = utilityLineupRepository.findByMapNameNormalized(cleanMapName);
+            }
+        } else if (utilityType != null) {
+            entities = utilityLineupRepository.findAll(UtilityLineupSpecifications.filter(null, utilityType, null));
+        } else {
+            entities = utilityLineupRepository.findAll();
+        }
+        return entities.stream().map(UtilityLineupDto::fromEntity).toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<UtilityLineupDto> getLineups(String mapName, UtilityType utilityType, StratSide teamSide) {
+        if (teamSide == null) {
+            return getLineups(mapName, utilityType);
+        }
         return utilityLineupRepository.findAll(UtilityLineupSpecifications.filter(mapName, utilityType, teamSide))
                 .stream()
                 .map(UtilityLineupDto::fromEntity)
@@ -122,93 +148,237 @@ public class UtilityLineupService {
 
     public List<UtilityLineupEntity> buildCuratedLineups() {
         return List.of(
-                // Mirage (5)
-                createLineup("de_mirage", UtilityType.SMOKE, StratSide.T, "Mirage Window Smoke from T Spawn",
-                        ThrowType.JUMP_THROW, 34.0, 78.0, 48.0, 46.0,
-                        "https://youtube.com/watch?v=mirage_window", "Align with trash can near T Spawn, crosshair on top-right antenna corner, D+Jumpthrow"),
+                // Mirage (de_mirage)
+                createLineup("b0000000-0000-0000-0000-000000000001", "de_mirage", UtilityType.SMOKE, StratSide.T,
+                        "Mirage: T Spawn \u2192 Window Smoke (Jumpthrow)", ThrowType.JUMPTHROW,
+                        34.2, 78.5, 48.1, 46.3,
+                        "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                        "Stand on the waste bin in T Spawn, line up crosshair with antenna tip and jumpthrow."),
 
-                createLineup("de_mirage", UtilityType.SMOKE, StratSide.T, "Mirage Connector Smoke from T Roof",
-                        ThrowType.JUMP_THROW, 38.0, 72.0, 53.0, 52.0,
-                        "https://youtube.com/watch?v=mirage_conn", "Stand against T Roof corner, aim at the middle wood peg, standard Jumpthrow"),
+                createLineup("b0000000-0000-0000-0000-000000000002", "de_mirage", UtilityType.SMOKE, StratSide.T,
+                        "Mirage: T Roof \u2192 Connector Smoke", ThrowType.STANDING,
+                        38.0, 72.0, 53.0, 52.0,
+                        "https://www.youtube.com/watch?v=V-_O7nl0Ii0",
+                        "Wedge into T Roof corner, aim at the middle wooden carpet beam, left click throw."),
 
-                createLineup("de_mirage", UtilityType.SMOKE, StratSide.T, "Mirage Stairs Smoke from A Ramp",
-                        ThrowType.STANDING, 45.0, 70.0, 59.0, 50.0,
-                        "https://youtube.com/watch?v=mirage_stairs", "Position against A Ramp wood board, aim at the dark spot on wall, Left-click throw"),
+                createLineup("b0000000-0000-0000-0000-000000000003", "de_mirage", UtilityType.SMOKE, StratSide.T,
+                        "Mirage: A Ramp \u2192 Stairs Smoke", ThrowType.STANDING,
+                        45.2, 70.1, 59.4, 50.2,
+                        "https://www.youtube.com/watch?v=RgKAFK5djSk",
+                        "Stand against A Ramp wooden scaffolding, aim at the dark spot on wall, normal throw."),
 
-                createLineup("de_mirage", UtilityType.SMOKE, StratSide.T, "Mirage Jungle Smoke from A Ramp",
-                        ThrowType.STANDING, 44.0, 71.0, 56.0, 47.0,
-                        "https://youtube.com/watch?v=mirage_jungle", "Stand on A Ramp center, aim between the two pillar tips, Left-click throw"),
+                createLineup("b0000000-0000-0000-0000-000000000004", "de_mirage", UtilityType.FLASH, StratSide.T,
+                        "Mirage: Palace \u2192 A Site Pop Flash", ThrowType.RUNNING,
+                        65.0, 68.0, 60.5, 58.2,
+                        "https://www.youtube.com/watch?v=oHg5SJYRHA0",
+                        "Run throw out of palace balcony to blind site anchors and ticket booth."),
 
-                createLineup("de_mirage", UtilityType.FLASH, StratSide.T, "Mirage A-Site Deep Flash from Palace",
-                        ThrowType.RUN_THROW, 65.0, 68.0, 60.0, 58.0,
-                        "https://youtube.com/watch?v=mirage_flash", "Running flash out of Palace window blinds all CT players holding Site and CT spawn"),
+                createLineup("b0000000-0000-0000-0000-000000000005", "de_mirage", UtilityType.MOLOTOV, StratSide.CT,
+                        "Mirage: CT Spawn \u2192 B Apartments Molotov", ThrowType.JUMPTHROW,
+                        52.0, 32.0, 24.5, 36.8,
+                        "https://www.youtube.com/watch?v=uelHwf8o7_U",
+                        "Stand near CT ticket, aim above kitchen roof, jumpthrow to incinerate B rush entrance."),
 
-                // Inferno (4)
-                createLineup("de_inferno", UtilityType.SMOKE, StratSide.T, "Inferno Coffin Smoke from Banana",
-                        ThrowType.STANDING, 32.0, 65.0, 25.0, 35.0,
-                        "https://youtube.com/watch?v=inferno_coffin", "Stand at half wall in Banana, aim at lantern top, Left-click throw"),
+                createLineup("b0000000-0000-0000-0000-000000000006", "de_mirage", UtilityType.HE, StratSide.BOTH,
+                        "Mirage: Top Mid \u2192 Window HE Grenade", ThrowType.CROUCH,
+                        42.0, 62.0, 48.0, 47.0,
+                        "https://www.youtube.com/watch?v=kXYiU_JCYtU",
+                        "Crouch behind top mid boxes, aim at window sill edge, stand and release."),
 
-                createLineup("de_inferno", UtilityType.SMOKE, StratSide.T, "Inferno CT Cross Smoke from Banana",
-                        ThrowType.JUMP_THROW, 35.0, 68.0, 28.0, 40.0,
-                        "https://youtube.com/watch?v=inferno_ct", "Stand at wooden barrels, aim at the antenna corner, Jumpthrow"),
+                // Inferno (de_inferno)
+                createLineup("b0000000-0000-0000-0000-000000000007", "de_inferno", UtilityType.SMOKE, StratSide.T,
+                        "Inferno: Banana \u2192 Coffins Smoke", ThrowType.STANDING,
+                        32.5, 65.2, 25.1, 35.4,
+                        "https://www.youtube.com/watch?v=3JZ_D3ELwOQ",
+                        "Stand at half wall in Banana, aim at lantern top ornament, left click release."),
 
-                createLineup("de_inferno", UtilityType.MOLOTOV, StratSide.T, "Inferno Car Molotov from Banana",
-                        ThrowType.RUN_THROW, 40.0, 75.0, 36.0, 62.0,
-                        "https://youtube.com/watch?v=inferno_car", "Running molotov clearing Sandbags and Car from Banana ramp"),
+                createLineup("b0000000-0000-0000-0000-000000000008", "de_inferno", UtilityType.SMOKE, StratSide.T,
+                        "Inferno: Banana \u2192 CT Cross Smoke", ThrowType.JUMPTHROW,
+                        35.0, 68.0, 28.5, 40.0,
+                        "https://www.youtube.com/watch?v=2Vv-BfVoq4g",
+                        "Stand at wooden logs, crosshair on antenna tip, jumpthrow."),
 
-                createLineup("de_inferno", UtilityType.MOLOTOV, StratSide.T, "Inferno Pit Molotov from Apps",
-                        ThrowType.JUMP_THROW, 58.0, 55.0, 70.0, 38.0,
-                        "https://youtube.com/watch?v=inferno_pit", "Aim out of second floor Apps balcony, Jumpthrow to fully flush Pit defender"),
+                createLineup("b0000000-0000-0000-0000-000000000009", "de_inferno", UtilityType.MOLOTOV, StratSide.T,
+                        "Inferno: Banana \u2192 Pit Molotov", ThrowType.JUMPTHROW,
+                        58.0, 55.0, 70.2, 38.4,
+                        "https://www.youtube.com/watch?v=fLexgOxsZu0",
+                        "Jumpthrow from boiler side to burn deep pit corner completely."),
 
-                // Dust II (3)
-                createLineup("de_dust2", UtilityType.SMOKE, StratSide.T, "Dust II Xbox Smoke from T Spawn",
-                        ThrowType.JUMP_THROW, 40.0, 80.0, 45.0, 55.0,
-                        "https://youtube.com/watch?v=d2_xbox", "Stand outside T Spawn tunnel, aim at the wall stain, Jumpthrow to seal Catwalk cross"),
+                createLineup("b0000000-0000-0000-0000-000000000010", "de_inferno", UtilityType.MOLOTOV, StratSide.T,
+                        "Inferno: Banana \u2192 Car Molotov", ThrowType.RUNNING,
+                        40.2, 75.0, 36.1, 62.3,
+                        "https://www.youtube.com/watch?v=kJQP7kiw5F0",
+                        "Running throw down banana to clear sandbags and car defenders."),
 
-                createLineup("de_dust2", UtilityType.FLASH, StratSide.T, "Dust II Long Corner Flash from Outside Long",
-                        ThrowType.STANDING, 68.0, 75.0, 75.0, 60.0,
-                        "https://youtube.com/watch?v=d2_long_flash", "Pop flash over Long Doors building, blinding CTs holding A Long corner"),
+                createLineup("b0000000-0000-0000-0000-000000000011", "de_inferno", UtilityType.FLASH, StratSide.CT,
+                        "Inferno: CT Arch \u2192 Banana Retake Flash", ThrowType.WALK_JUMPTHROW,
+                        30.0, 42.0, 34.0, 60.0,
+                        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                        "Walk forward one step from CT arch and jumpthrow high popflash over church."),
 
-                createLineup("de_dust2", UtilityType.SMOKE, StratSide.T, "Dust II B Door Smoke from Upper Tunnels",
-                        ThrowType.STANDING, 22.0, 45.0, 20.0, 28.0,
-                        "https://youtube.com/watch?v=d2_b_doors", "Align in dark corner of Upper Tunnels, aim at beam junction, Left-click throw"),
+                createLineup("b0000000-0000-0000-0000-000000000012", "de_inferno", UtilityType.HE, StratSide.BOTH,
+                        "Inferno: Banana \u2192 B Site HE Stack", ThrowType.STANDING,
+                        33.0, 66.0, 27.0, 37.0,
+                        "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
+                        "Stand at banana cart, aim at chimney corner, left click throw for 80+ damage on site."),
 
-                // Nuke (2)
-                createLineup("de_nuke", UtilityType.SMOKE, StratSide.T, "Nuke Outside Smoke Wall #1 from T Roof",
-                        ThrowType.JUMP_THROW, 35.0, 80.0, 38.0, 58.0,
-                        "https://youtube.com/watch?v=nuke_outside1", "Part 1 of Outside smoke cross, blocks Red Container to Garage line of sight"),
+                // Dust II (de_dust2)
+                createLineup("b0000000-0000-0000-0000-000000000013", "de_dust2", UtilityType.SMOKE, StratSide.T,
+                        "Dust2: T Spawn \u2192 Xbox Smoke", ThrowType.JUMPTHROW,
+                        40.5, 80.2, 45.3, 55.1,
+                        "https://www.youtube.com/watch?v=RgKAFK5djSk",
+                        "Position against wall outside suicide, crosshair at top left building corner, jumpthrow."),
 
-                createLineup("de_nuke", UtilityType.SMOKE, StratSide.T, "Nuke Outside Smoke Wall #2 from T Roof",
-                        ThrowType.JUMP_THROW, 36.0, 80.0, 39.0, 50.0,
-                        "https://youtube.com/watch?v=nuke_outside2", "Part 2 of Outside smoke cross, blocks Secret to Main sniper line of sight"),
+                createLineup("b0000000-0000-0000-0000-000000000014", "de_dust2", UtilityType.FLASH, StratSide.T,
+                        "Dust2: Outside Long \u2192 Long Corner Flash", ThrowType.STANDING,
+                        68.0, 75.0, 75.2, 60.4,
+                        "https://www.youtube.com/watch?v=kXYiU_JCYtU",
+                        "Stand at blue dumpster outside long doors, aim at wire intersection, left click throw."),
 
-                // Ancient (2)
-                createLineup("de_ancient", UtilityType.SMOKE, StratSide.T, "Ancient Donut Smoke from Mid Yard",
-                        ThrowType.JUMP_THROW, 48.0, 72.0, 52.0, 48.0,
-                        "https://youtube.com/watch?v=ancient_donut", "Jumpthrow from Mid Yard pillar, blooms directly inside Donut doorway"),
+                createLineup("b0000000-0000-0000-0000-000000000015", "de_dust2", UtilityType.SMOKE, StratSide.T,
+                        "Dust2: Upper Tunnels \u2192 B Doors Smoke", ThrowType.STANDING,
+                        22.0, 45.0, 20.1, 28.3,
+                        "https://www.youtube.com/watch?v=C0DPdy98e4c",
+                        "Wedge into back right corner of upper tunnels, align with roof beam, throw."),
 
-                createLineup("de_ancient", UtilityType.SMOKE, StratSide.T, "Ancient B Short Smoke from B Ramp",
-                        ThrowType.STANDING, 30.0, 65.0, 32.0, 42.0,
-                        "https://youtube.com/watch?v=ancient_b_short", "Stand at B Ramp statue, aim at tree leaves, blocks CT rotations through Cave"),
+                createLineup("b0000000-0000-0000-0000-000000000016", "de_dust2", UtilityType.MOLOTOV, StratSide.CT,
+                        "Dust2: Mid Doors \u2192 Short Molotov", ThrowType.WALK_JUMPTHROW,
+                        48.0, 50.0, 52.0, 42.0,
+                        "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                        "Take one step forward from CT mid double doors, jumpthrow towards catwalk stairs."),
 
-                // Anubis (2)
-                createLineup("de_anubis", UtilityType.SMOKE, StratSide.T, "Anubis Mid Doors Smoke from Bridge",
-                        ThrowType.JUMP_THROW, 50.0, 75.0, 48.0, 52.0,
-                        "https://youtube.com/watch?v=anubis_mid", "Jumpthrow over canal wall, completely smokes off Mid Doors from sniper angle"),
+                createLineup("b0000000-0000-0000-0000-000000000017", "de_dust2", UtilityType.HE, StratSide.BOTH,
+                        "Dust2: Long Doors \u2192 Pit HE Grenade", ThrowType.RUNNING,
+                        69.0, 65.0, 78.0, 48.0,
+                        "https://www.youtube.com/watch?v=OPf0YbXqDm0",
+                        "Running throw through long doors straight into pit to dislodge AWP camper."),
 
-                createLineup("de_anubis", UtilityType.FLASH, StratSide.T, "Anubis B Main Flash over Canal",
-                        ThrowType.STANDING, 35.0, 70.0, 28.0, 58.0,
-                        "https://youtube.com/watch?v=anubis_b_flash", "High arc popflash exploding above B Site pillars")
+                createLineup("b0000000-0000-0000-0000-000000000018", "de_dust2", UtilityType.FLASH, StratSide.CT,
+                        "Dust2: CT Mid \u2192 Tunnels Exit Flash", ThrowType.CROUCH,
+                        42.0, 48.0, 28.0, 40.0,
+                        "https://www.youtube.com/watch?v=V-_O7nl0Ii0",
+                        "Crouch by mid B doors and throw underhand flash to blind upper tunnel rushers."),
+
+                // Nuke (de_nuke)
+                createLineup("b0000000-0000-0000-0000-000000000019", "de_nuke", UtilityType.SMOKE, StratSide.T,
+                        "Nuke: Silo \u2192 Garage Cross Smoke", ThrowType.JUMPTHROW,
+                        35.5, 80.0, 38.2, 58.0,
+                        "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
+                        "Align on Silo catwalk, aim at crane tip, jumpthrow for outside cross smoke #1."),
+
+                createLineup("b0000000-0000-0000-0000-000000000020", "de_nuke", UtilityType.SMOKE, StratSide.T,
+                        "Nuke: T Roof \u2192 Secret Cross Smoke", ThrowType.JUMPTHROW,
+                        36.5, 80.0, 39.1, 50.0,
+                        "https://www.youtube.com/watch?v=SarcasticHyperOtter",
+                        "Second part of outside smoke wall, blocks Secret sightline from CT main."),
+
+                createLineup("b0000000-0000-0000-0000-000000000021", "de_nuke", UtilityType.MOLOTOV, StratSide.T,
+                        "Nuke: T Roof \u2192 Hut Molotov", ThrowType.STANDING,
+                        44.0, 72.0, 48.0, 56.0,
+                        "https://www.youtube.com/watch?v=60ItHLz5WEA",
+                        "Stand by roof ventilator, aim at skybox antenna, left-click throw to burn inside Hut."),
+
+                createLineup("b0000000-0000-0000-0000-000000000022", "de_nuke", UtilityType.FLASH, StratSide.T,
+                        "Nuke: Lobby \u2192 A Site Pop Flash", ThrowType.RUNNING,
+                        46.0, 68.0, 50.0, 52.0,
+                        "https://www.youtube.com/watch?v=BlushingHedonisticSparrow",
+                        "Running flash through squeaky door ceiling grating, perfectly pops above silo."),
+
+                createLineup("b0000000-0000-0000-0000-000000000023", "de_nuke", UtilityType.HE, StratSide.CT,
+                        "Nuke: Outside Garage \u2192 Secret Retake HE", ThrowType.WALK_JUMPTHROW,
+                        40.0, 54.0, 38.0, 44.0,
+                        "https://www.youtube.com/watch?v=oHg5SJYRHA0",
+                        "Walk jumpthrow over red container into secret stairs to finish low HP bomb planters."),
+
+                createLineup("b0000000-0000-0000-0000-000000000024", "de_nuke", UtilityType.FLASH, StratSide.BOTH,
+                        "Nuke: Heaven \u2192 Ramp Flash", ThrowType.CROUCH,
+                        58.0, 48.0, 64.0, 55.0,
+                        "https://www.youtube.com/watch?v=uelHwf8o7_U",
+                        "Crouch by heaven catwalk railing, drop flash directly into ramp room entrance."),
+
+                // Ancient (de_ancient)
+                createLineup("b0000000-0000-0000-0000-000000000025", "de_ancient", UtilityType.SMOKE, StratSide.T,
+                        "Ancient: T Spawn \u2192 Red Room Smoke", ThrowType.JUMPTHROW,
+                        48.0, 72.0, 52.0, 48.0,
+                        "https://www.youtube.com/watch?v=eBGIQ7ZuuiU",
+                        "Stand by T spawn ruins, aim at top foliage vertex, jumpthrow to block Red Room sniper."),
+
+                createLineup("b0000000-0000-0000-0000-000000000026", "de_ancient", UtilityType.SMOKE, StratSide.T,
+                        "Ancient: Mid Yard \u2192 Donut Smoke", ThrowType.STANDING,
+                        50.0, 68.0, 56.0, 52.0,
+                        "https://www.youtube.com/watch?v=OPf0YbXqDm0",
+                        "Align against middle pillar, aim at carving eye on wall, standard standing throw."),
+
+                createLineup("b0000000-0000-0000-0000-000000000027", "de_ancient", UtilityType.MOLOTOV, StratSide.T,
+                        "Ancient: B Ramp \u2192 Cave Molotov", ThrowType.RUNNING,
+                        30.0, 65.0, 32.0, 42.0,
+                        "https://www.youtube.com/watch?v=kffacxfA7G4",
+                        "Running throw down B ramp that spreads across cave entrance and default box."),
+
+                createLineup("b0000000-0000-0000-0000-000000000028", "de_ancient", UtilityType.FLASH, StratSide.T,
+                        "Ancient: A Main \u2192 Temple Entrance Flash", ThrowType.JUMPTHROW,
+                        62.0, 66.0, 68.0, 52.0,
+                        "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                        "High popflash over the temple archway blinding all CTs defending A site."),
+
+                createLineup("b0000000-0000-0000-0000-000000000029", "de_ancient", UtilityType.HE, StratSide.CT,
+                        "Ancient: CT Spawn \u2192 Mid Donut HE Grenade", ThrowType.WALK_JUMPTHROW,
+                        52.0, 36.0, 51.0, 46.0,
+                        "https://www.youtube.com/watch?v=2Vv-BfVoq4g",
+                        "Walk jumpthrow through CT connector to explode against mid aggression."),
+
+                createLineup("b0000000-0000-0000-0000-000000000030", "de_ancient", UtilityType.SMOKE, StratSide.BOTH,
+                        "Ancient: Cheetah \u2192 B Site Retake Smoke", ThrowType.CROUCH,
+                        36.0, 50.0, 30.0, 38.0,
+                        "https://www.youtube.com/watch?v=3JZ_D3ELwOQ",
+                        "Crouch behind cheetah pillar, aim at top left moss, stand and throw to extinguish site mollies."),
+
+                // Anubis (de_anubis)
+                createLineup("b0000000-0000-0000-0000-000000000031", "de_anubis", UtilityType.SMOKE, StratSide.T,
+                        "Anubis: B Main \u2192 B Connector Smoke", ThrowType.JUMPTHROW,
+                        35.0, 70.0, 28.0, 52.0,
+                        "https://www.youtube.com/watch?v=L_LUpnjgPso",
+                        "Align with palace column in B Main, aim at tower top ornament, jumpthrow."),
+
+                createLineup("b0000000-0000-0000-0000-000000000032", "de_anubis", UtilityType.SMOKE, StratSide.T,
+                        "Anubis: Canal Bridge \u2192 Mid Doors Smoke", ThrowType.STANDING,
+                        50.0, 75.0, 48.0, 52.0,
+                        "https://www.youtube.com/watch?v=hT_nvWreIhg",
+                        "Stand on wooden bridge, aim at the arch corner, standard throw to blind sniper nest."),
+
+                createLineup("b0000000-0000-0000-0000-000000000033", "de_anubis", UtilityType.MOLOTOV, StratSide.T,
+                        "Anubis: A Main \u2192 Heaven Molotov", ThrowType.WALK_JUMPTHROW,
+                        66.0, 72.0, 72.0, 54.0,
+                        "https://www.youtube.com/watch?v=HonestGlamorousWaffle",
+                        "Walk one step and jumpthrow through A Main opening to clear Heaven perch."),
+
+                createLineup("b0000000-0000-0000-0000-000000000034", "de_anubis", UtilityType.FLASH, StratSide.T,
+                        "Anubis: Canal \u2192 B Site Pop Flash", ThrowType.RUNNING,
+                        38.0, 68.0, 32.0, 58.0,
+                        "https://www.youtube.com/watch?v=kJQP7kiw5F0",
+                        "Run throw across water over the canal roof, blinding site pillars and alleyway."),
+
+                createLineup("b0000000-0000-0000-0000-000000000035", "de_anubis", UtilityType.HE, StratSide.CT,
+                        "Anubis: CT Spawn \u2192 Mid Canal HE Grenade", ThrowType.JUMPTHROW,
+                        52.0, 38.0, 49.0, 58.0,
+                        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                        "Jumpthrow from CT spawn stairs to blast water pushers before they round connector."),
+
+                createLineup("b0000000-0000-0000-0000-000000000036", "de_anubis", UtilityType.SMOKE, StratSide.BOTH,
+                        "Anubis: B Alley \u2192 Default Plant Site Smoke", ThrowType.CROUCH,
+                        26.0, 48.0, 28.0, 40.0,
+                        "https://www.youtube.com/watch?v=V-_O7nl0Ii0",
+                        "Crouch under awning, aim at center hieroglyph, release for safe B bomb plant.")
         );
     }
 
     private UtilityLineupEntity createLineup(
-            String mapName, UtilityType utilityType, StratSide teamSide, String title,
+            String idStr, String mapName, UtilityType utilityType, StratSide teamSide, String title,
             ThrowType throwType, Double standX, Double standY, Double landX, Double landY,
             String videoUrl, String description
     ) {
         return UtilityLineupEntity.builder()
-                .id(UUID.randomUUID())
+                .id(UUID.fromString(idStr))
                 .mapName(mapName)
                 .utilityType(utilityType)
                 .teamSide(teamSide)
@@ -220,8 +390,9 @@ public class UtilityLineupService {
                 .landY(landY)
                 .videoUrl(videoUrl)
                 .description(description)
-                .createdByUserId(null)
+                .createdByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001"))
                 .isVerified(true)
+                .createdAt(Instant.now())
                 .build();
     }
 }

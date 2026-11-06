@@ -23,7 +23,10 @@ public final class UtilityLineupSpecifications {
             List<Predicate> predicates = new ArrayList<>();
 
             if (StringUtils.hasText(mapName)) {
-                predicates.add(cb.equal(root.get("mapName"), mapName.trim().toLowerCase()));
+                String raw = mapName.trim().toLowerCase();
+                String stripped = raw.startsWith("de_") ? raw.substring(3) : raw;
+                String withPrefix = "de_" + stripped;
+                predicates.add(root.get("mapName").in(raw, stripped, withPrefix));
             }
             if (utilityType != null) {
                 predicates.add(cb.equal(root.get("utilityType"), utilityType));
