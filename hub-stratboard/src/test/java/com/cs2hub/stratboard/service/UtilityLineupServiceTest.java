@@ -45,7 +45,7 @@ class UtilityLineupServiceTest {
     }
 
     @Test
-    @DisplayName("Startup seeder should populate 36 curated lineups when database count is less than 30")
+    @DisplayName("Startup seeder should populate curated lineups when database count is less than 30")
     void shouldSeedLineupsWhenEmpty() {
         when(utilityLineupRepository.count()).thenReturn(0L);
 
@@ -56,7 +56,7 @@ class UtilityLineupServiceTest {
         verify(utilityLineupRepository).saveAll(captor.capture());
 
         List<UtilityLineupEntity> savedList = captor.getValue();
-        assertThat(savedList).hasSize(36);
+        assertThat(savedList).hasSize(47);
         assertThat(savedList).allMatch(UtilityLineupEntity::getIsVerified);
     }
 

@@ -55,8 +55,55 @@ public record UtilityLineupDto(
         Boolean isVerified,
 
         @Schema(description = "Creation timestamp")
-        Instant createdAt
+        Instant createdAt,
+
+        // CSNADES.GG Enhanced Specification Fields
+        @Schema(description = "Origin throw callout", example = "T Spawn")
+        String fromCallout,
+
+        @Schema(description = "Target landing callout", example = "Window")
+        String toCallout,
+
+        @Schema(description = "Player movement state", example = "Stationary")
+        String movement,
+
+        @Schema(description = "Input technique description", example = "Jumpthrow")
+        String technique,
+
+        @Schema(description = "Lineup precision rating", example = "Precise")
+        String precision,
+
+        @Schema(description = "Lineup difficulty level", example = "Medium")
+        String difficulty,
+
+        @Schema(description = "Whether lineup is actively used by Tier 1 Pro players")
+        Boolean isPro,
+
+        @Schema(description = "Community view count", example = "8833")
+        Integer viewsCount,
+
+        @Schema(description = "CS2 console setpos practice command", example = "setpos -1024.00 -2450.00 -167.90; setang -32.45 145.10 0.00")
+        String setposCommand,
+
+        @Schema(description = "Estimated in-flight air time in seconds", example = "4.8")
+        Double airTimeSeconds
 ) implements Serializable {
+
+    // Overloaded backward-compatible constructor for existing callers and test fixtures
+    public UtilityLineupDto(
+            UUID id, String mapName, UtilityType utilityType, StratSide teamSide,
+            String title, ThrowType throwType, Double standX, Double standY,
+            Double landX, Double landY, String videoUrl, String description,
+            UUID createdByUserId, Boolean isVerified, Instant createdAt
+    ) {
+        this(
+                id, mapName, utilityType, teamSide, title, throwType,
+                standX, standY, landX, landY, videoUrl, description,
+                createdByUserId, isVerified, createdAt,
+                null, null, "Stationary", "Left Click", "Precise",
+                "Medium", false, 1200, null, 4.5
+        );
+    }
 
     public static UtilityLineupDto fromEntity(UtilityLineupEntity entity) {
         return new UtilityLineupDto(
@@ -74,7 +121,17 @@ public record UtilityLineupDto(
                 entity.getDescription(),
                 entity.getCreatedByUserId(),
                 entity.getIsVerified(),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getFromCallout(),
+                entity.getToCallout(),
+                entity.getMovement(),
+                entity.getTechnique(),
+                entity.getPrecision(),
+                entity.getDifficulty(),
+                entity.getIsPro(),
+                entity.getViewsCount(),
+                entity.getSetposCommand(),
+                entity.getAirTimeSeconds()
         );
     }
 }
