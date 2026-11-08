@@ -9,7 +9,7 @@ INSERT INTO stratboard.utility_lineups (
 ) VALUES
 -- Mirage (de_mirage)
 ('b0000000-0000-0000-0000-000000000001', 'de_mirage', 'SMOKE', 'T', 'Mirage: T Spawn → Window Smoke (Jumpthrow)', 'JUMPTHROW',
- 34.2, 78.5, 48.1, 46.3, 'https://www.youtube.com/watch?v=kJQP7kiw5Fk', 'Stand on the waste bin in T Spawn, line up crosshair with antenna tip and jumpthrow.',
+ 34.2, 78.5, 48.1, 46.3, 'https://www.youtube.com/watch?v=iMOfoEAGR4Q', 'Stand on the waste bin in T Spawn, line up crosshair with antenna tip and jumpthrow.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000002', 'de_mirage', 'SMOKE', 'T', 'Mirage: T Roof → Connector Smoke', 'STANDING',
@@ -46,15 +46,15 @@ INSERT INTO stratboard.utility_lineups (
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000010', 'de_inferno', 'MOLOTOV', 'T', 'Inferno: Banana → Car Molotov', 'RUNNING',
- 40.2, 75.0, 36.1, 62.3, 'https://www.youtube.com/watch?v=kJQP7kiw5F0', 'Running throw down banana to clear sandbags and car defenders.',
+ 40.2, 75.0, 36.1, 62.3, 'https://www.youtube.com/watch?v=HRHhgVDLILA', 'Running throw down banana to clear sandbags and car defenders.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000011', 'de_inferno', 'FLASH', 'CT', 'Inferno: CT Arch → Banana Retake Flash', 'WALK_JUMPTHROW',
- 30.0, 42.0, 34.0, 60.0, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'Walk forward one step from CT arch and jumpthrow high popflash over church.',
+ 30.0, 42.0, 34.0, 60.0, 'https://www.youtube.com/watch?v=Tf4SRkZlFrI', 'Walk forward one step from CT arch and jumpthrow high popflash over church.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000012', 'de_inferno', 'HE', 'BOTH', 'Inferno: Banana → B Site HE Stack', 'STANDING',
- 33.0, 66.0, 27.0, 37.0, 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 'Stand at banana cart, aim at chimney corner, left click throw for 80+ damage on site.',
+ 33.0, 66.0, 27.0, 37.0, 'https://www.youtube.com/watch?v=Y2jmvt-fHy8', 'Stand at banana cart, aim at chimney corner, left click throw for 80+ damage on site.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 -- Dust II (de_dust2)
@@ -67,15 +67,15 @@ INSERT INTO stratboard.utility_lineups (
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000015', 'de_dust2', 'SMOKE', 'T', 'Dust2: Upper Tunnels → B Doors Smoke', 'STANDING',
- 22.0, 45.0, 20.1, 28.3, 'https://www.youtube.com/watch?v=C0DPdy98e4c', 'Wedge into back right corner of upper tunnels, align with roof beam, throw.',
+ 22.0, 45.0, 20.1, 28.3, 'https://www.youtube.com/watch?v=8y_MdBVi3L0', 'Wedge into back right corner of upper tunnels, align with roof beam, throw.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000016', 'de_dust2', 'MOLOTOV', 'CT', 'Dust2: Mid Doors → Short Molotov', 'WALK_JUMPTHROW',
- 48.0, 50.0, 52.0, 42.0, 'https://www.youtube.com/watch?v=kJQP7kiw5Fk', 'Take one step forward from CT mid double doors, jumpthrow towards catwalk stairs.',
+ 48.0, 50.0, 52.0, 42.0, 'https://www.youtube.com/watch?v=iMOfoEAGR4Q', 'Take one step forward from CT mid double doors, jumpthrow towards catwalk stairs.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000017', 'de_dust2', 'HE', 'BOTH', 'Dust2: Long Doors → Pit HE Grenade', 'RUNNING',
- 69.0, 65.0, 78.0, 48.0, 'https://www.youtube.com/watch?v=OPf0YbXqDm0', 'Running throw through long doors straight into pit to dislodge AWP camper.',
+ 69.0, 65.0, 78.0, 48.0, 'https://www.youtube.com/watch?v=Cm6Z7Q3uh10', 'Running throw through long doors straight into pit to dislodge AWP camper.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000018', 'de_dust2', 'FLASH', 'CT', 'Dust2: CT Mid → Tunnels Exit Flash', 'CROUCH',
@@ -84,19 +84,19 @@ INSERT INTO stratboard.utility_lineups (
 
 -- Nuke (de_nuke)
 ('b0000000-0000-0000-0000-000000000019', 'de_nuke', 'SMOKE', 'T', 'Nuke: Silo → Garage Cross Smoke', 'JUMPTHROW',
- 35.5, 80.0, 38.2, 58.0, 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 'Align on Silo catwalk, aim at crane tip, jumpthrow for outside cross smoke #1.',
+ 35.5, 80.0, 38.2, 58.0, 'https://www.youtube.com/watch?v=Y2jmvt-fHy8', 'Align on Silo catwalk, aim at crane tip, jumpthrow for outside cross smoke #1.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000020', 'de_nuke', 'SMOKE', 'T', 'Nuke: T Roof → Secret Cross Smoke', 'JUMPTHROW',
- 36.5, 80.0, 39.1, 50.0, 'https://www.youtube.com/watch?v=SarcasticHyperOtter', 'Second part of outside smoke wall, blocks Secret sightline from CT main.',
+ 36.5, 80.0, 39.1, 50.0, 'https://www.youtube.com/watch?v=E80qFqH_E4w', 'Second part of outside smoke wall, blocks Secret sightline from CT main.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000021', 'de_nuke', 'MOLOTOV', 'T', 'Nuke: T Roof → Hut Molotov', 'STANDING',
- 44.0, 72.0, 48.0, 56.0, 'https://www.youtube.com/watch?v=60ItHLz5WEA', 'Stand by roof ventilator, aim at skybox antenna, left-click throw to burn inside Hut.',
+ 44.0, 72.0, 48.0, 56.0, 'https://www.youtube.com/watch?v=-jYGKOuX_6g', 'Stand by roof ventilator, aim at skybox antenna, left-click throw to burn inside Hut.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000022', 'de_nuke', 'FLASH', 'T', 'Nuke: Lobby → A Site Pop Flash', 'RUNNING',
- 46.0, 68.0, 50.0, 52.0, 'https://www.youtube.com/watch?v=BlushingHedonisticSparrow', 'Running flash through squeaky door ceiling grating, perfectly pops above silo.',
+ 46.0, 68.0, 50.0, 52.0, 'https://www.youtube.com/watch?v=9qU49i3t_u8', 'Running flash through squeaky door ceiling grating, perfectly pops above silo.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000023', 'de_nuke', 'HE', 'CT', 'Nuke: Outside Garage → Secret Retake HE', 'WALK_JUMPTHROW',
@@ -109,19 +109,19 @@ INSERT INTO stratboard.utility_lineups (
 
 -- Ancient (de_ancient)
 ('b0000000-0000-0000-0000-000000000025', 'de_ancient', 'SMOKE', 'T', 'Ancient: T Spawn → Red Room Smoke', 'JUMPTHROW',
- 48.0, 72.0, 52.0, 48.0, 'https://www.youtube.com/watch?v=eBGIQ7ZuuiU', 'Stand by T spawn ruins, aim at top foliage vertex, jumpthrow to block Red Room sniper.',
+ 48.0, 72.0, 52.0, 48.0, 'https://www.youtube.com/watch?v=ksGnjhCtcOs', 'Stand by T spawn ruins, aim at top foliage vertex, jumpthrow to block Red Room sniper.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000026', 'de_ancient', 'SMOKE', 'T', 'Ancient: Mid Yard → Donut Smoke', 'STANDING',
- 50.0, 68.0, 56.0, 52.0, 'https://www.youtube.com/watch?v=OPf0YbXqDm0', 'Align against middle pillar, aim at carving eye on wall, standard standing throw.',
+ 50.0, 68.0, 56.0, 52.0, 'https://www.youtube.com/watch?v=Cm6Z7Q3uh10', 'Align against middle pillar, aim at carving eye on wall, standard standing throw.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000027', 'de_ancient', 'MOLOTOV', 'T', 'Ancient: B Ramp → Cave Molotov', 'RUNNING',
- 30.0, 65.0, 32.0, 42.0, 'https://www.youtube.com/watch?v=kffacxfA7G4', 'Running throw down B ramp that spreads across cave entrance and default box.',
+ 30.0, 65.0, 32.0, 42.0, 'https://www.youtube.com/watch?v=x6XSzNs7QJY', 'Running throw down B ramp that spreads across cave entrance and default box.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000028', 'de_ancient', 'FLASH', 'T', 'Ancient: A Main → Temple Entrance Flash', 'JUMPTHROW',
- 62.0, 66.0, 68.0, 52.0, 'https://www.youtube.com/watch?v=kJQP7kiw5Fk', 'High popflash over the temple archway blinding all CTs defending A site.',
+ 62.0, 66.0, 68.0, 52.0, 'https://www.youtube.com/watch?v=iMOfoEAGR4Q', 'High popflash over the temple archway blinding all CTs defending A site.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000029', 'de_ancient', 'HE', 'CT', 'Ancient: CT Spawn → Mid Donut HE Grenade', 'WALK_JUMPTHROW',
@@ -134,23 +134,23 @@ INSERT INTO stratboard.utility_lineups (
 
 -- Anubis (de_anubis)
 ('b0000000-0000-0000-0000-000000000031', 'de_anubis', 'SMOKE', 'T', 'Anubis: B Main → B Connector Smoke', 'JUMPTHROW',
- 35.0, 70.0, 28.0, 52.0, 'https://www.youtube.com/watch?v=L_LUpnjgPso', 'Align with palace column in B Main, aim at tower top ornament, jumpthrow.',
+ 35.0, 70.0, 28.0, 52.0, 'https://www.youtube.com/watch?v=2HGeUt7YbzY', 'Align with palace column in B Main, aim at tower top ornament, jumpthrow.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000032', 'de_anubis', 'SMOKE', 'T', 'Anubis: Canal Bridge → Mid Doors Smoke', 'STANDING',
- 50.0, 75.0, 48.0, 52.0, 'https://www.youtube.com/watch?v=hT_nvWreIhg', 'Stand on wooden bridge, aim at the arch corner, standard throw to blind sniper nest.',
+ 50.0, 75.0, 48.0, 52.0, 'https://www.youtube.com/watch?v=HBzqFCoyx-I', 'Stand on wooden bridge, aim at the arch corner, standard throw to blind sniper nest.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000033', 'de_anubis', 'MOLOTOV', 'T', 'Anubis: A Main → Heaven Molotov', 'WALK_JUMPTHROW',
- 66.0, 72.0, 72.0, 54.0, 'https://www.youtube.com/watch?v=HonestGlamorousWaffle', 'Walk one step and jumpthrow through A Main opening to clear Heaven perch.',
+ 66.0, 72.0, 72.0, 54.0, 'https://www.youtube.com/watch?v=zB-N5_r0gLs', 'Walk one step and jumpthrow through A Main opening to clear Heaven perch.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000034', 'de_anubis', 'FLASH', 'T', 'Anubis: Canal → B Site Pop Flash', 'RUNNING',
- 38.0, 68.0, 32.0, 58.0, 'https://www.youtube.com/watch?v=kJQP7kiw5F0', 'Run throw across water over the canal roof, blinding site pillars and alleyway.',
+ 38.0, 68.0, 32.0, 58.0, 'https://www.youtube.com/watch?v=HRHhgVDLILA', 'Run throw across water over the canal roof, blinding site pillars and alleyway.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000035', 'de_anubis', 'HE', 'CT', 'Anubis: CT Spawn → Mid Canal HE Grenade', 'JUMPTHROW',
- 52.0, 38.0, 49.0, 58.0, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'Jumpthrow from CT spawn stairs to blast water pushers before they round connector.',
+ 52.0, 38.0, 49.0, 58.0, 'https://www.youtube.com/watch?v=Tf4SRkZlFrI', 'Jumpthrow from CT spawn stairs to blast water pushers before they round connector.',
  '00000000-0000-0000-0000-000000000001', TRUE, NOW()),
 
 ('b0000000-0000-0000-0000-000000000036', 'de_anubis', 'SMOKE', 'BOTH', 'Anubis: B Alley → Default Plant Site Smoke', 'CROUCH',

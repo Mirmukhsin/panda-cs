@@ -143,7 +143,7 @@ public class UtilityLineupService {
                 ThrowType.JUMP_THROW, "Stationary", "Jumpthrow", "Precise", "Medium", true, 18450,
                 34.0, 78.5, 48.1, 46.3, 5.1,
                 "setpos -1024.12 -2450.45 -167.90; setang -32.45 145.10 0.00",
-                "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                "https://www.youtube.com/watch?v=iMOfoEAGR4Q",
                 "Stand on trash can at T Spawn, aim at the top right antenna tip, standard Jumpthrow. Essential mid control smoke."));
 
         list.add(createFullLineup("de_mirage", UtilityType.SMOKE, StratSide.T,
@@ -151,7 +151,7 @@ public class UtilityLineupService {
                 ThrowType.JUMP_THROW, "Stationary", "Jumpthrow", "Precise", "Easy", true, 9200,
                 42.0, 64.0, 48.1, 46.3, 3.8,
                 "setpos -650.00 -1680.00 -120.00; setang -28.10 138.50 0.00",
-                "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                "https://www.youtube.com/watch?v=iMOfoEAGR4Q",
                 "Wedge behind mid cart, aim at highest window lintel, Jumpthrow. Fast secondary Window execute."));
 
         list.add(createFullLineup("de_mirage", UtilityType.SMOKE, StratSide.T,
@@ -159,7 +159,7 @@ public class UtilityLineupService {
                 ThrowType.STANDING, "Stationary", "Left Click", "Precise", "Hard", false, 4100,
                 46.5, 58.0, 48.1, 46.3, 2.9,
                 "setpos -320.00 -1400.00 -240.00; setang -54.00 85.00 0.00",
-                "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                "https://www.youtube.com/watch?v=iMOfoEAGR4Q",
                 "Crouch-stand against Underpass stairs, aim through window grate, Left Click throw."));
 
         // Cluster: Top Connector (2 origins)
@@ -282,7 +282,7 @@ public class UtilityLineupService {
                 ThrowType.WALK_JUMPTHROW, "Walking", "Walk Jumpthrow", "Precise", "Medium", true, 10400,
                 30.0, 42.0, 34.0, 60.0, 2.8,
                 "setpos -200.00 150.00 -30.00; setang -45.00 160.00 0.00",
-                "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "https://www.youtube.com/watch?v=Tf4SRkZlFrI",
                 "Walk forward one step from CT arch and jumpthrow high popflash over church."));
 
         list.add(createFullLineup("de_inferno", UtilityType.HE, StratSide.T,
@@ -290,7 +290,7 @@ public class UtilityLineupService {
                 ThrowType.STANDING, "Stationary", "Left Click", "Precise", "Easy", true, 8700,
                 33.0, 66.0, 27.0, 37.0, 3.6,
                 "setpos -80.00 900.00 -55.00; setang -35.00 -80.00 0.00",
-                "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
+                "https://www.youtube.com/watch?v=Y2jmvt-fHy8",
                 "Stand at banana cart, aim at chimney corner, left click throw for 80+ damage on site."));
 
         // ==========================================
@@ -319,7 +319,7 @@ public class UtilityLineupService {
                 ThrowType.STANDING, "Stationary", "Left Click", "Precise", "Easy", true, 16900,
                 22.0, 45.0, 20.1, 28.3, 3.4,
                 "setpos -1800.00 800.00 50.00; setang -28.00 -40.00 0.00",
-                "https://www.youtube.com/watch?v=C0DPdy98e4c",
+                "https://www.youtube.com/watch?v=8y_MdBVi3L0",
                 "Wedge into back right corner of upper tunnels, align with roof beam, throw."));
 
         list.add(createFullLineup("de_dust2", UtilityType.FLASH, StratSide.T,
@@ -467,7 +467,7 @@ public class UtilityLineupService {
                 ThrowType.JUMP_THROW, "Stationary", "Jumpthrow", "Precise", "Easy", true, 11800,
                 38.0, 75.0, 40.0, 48.0, 4.5,
                 "setpos -600.00 -1500.00 -250.00; setang -40.00 85.00 0.00",
-                "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                "https://www.youtube.com/watch?v=iMOfoEAGR4Q",
                 "Blooms at Monster tunnel exit to allow safe B site approach."));
 
         list.add(createFullLineup("de_overpass", UtilityType.MOLOTOV, StratSide.T,
@@ -491,7 +491,7 @@ public class UtilityLineupService {
                 ThrowType.JUMP_THROW, "Stationary", "Jumpthrow", "Precise", "Medium", false, 5800,
                 55.0, 35.0, 58.0, 70.0, 5.0,
                 "setpos 300.00 300.00 -100.00; setang -45.00 -90.00 0.00",
-                "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                "https://www.youtube.com/watch?v=iMOfoEAGR4Q",
                 "CT opening defense smoke shutting down early T mid fountain push."));
 
         // ==========================================
@@ -502,7 +502,7 @@ public class UtilityLineupService {
                 ThrowType.JUMP_THROW, "Stationary", "Jumpthrow", "Precise", "Easy", true, 10700,
                 42.0, 85.0, 48.0, 48.0, 5.2,
                 "setpos -400.00 2200.00 -150.00; setang -38.00 -75.00 0.00",
-                "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                "https://www.youtube.com/watch?v=iMOfoEAGR4Q",
                 "Cuts off sniper rotations between A and B train yards through Z hallway."));
 
         list.add(createFullLineup("de_train", UtilityType.FLASH, StratSide.T,
@@ -529,7 +529,7 @@ public class UtilityLineupService {
                 ThrowType.JUMP_THROW, "Stationary", "Jumpthrow", "Precise", "Easy", true, 11200,
                 52.0, 75.0, 60.0, 52.0, 4.4,
                 "setpos 100.00 -1500.00 -100.00; setang -36.00 65.00 0.00",
-                "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+                "https://www.youtube.com/watch?v=iMOfoEAGR4Q",
                 "Blocks sandbag sniper line on A Ramp yellow crane approach."));
 
         list.add(createFullLineup("de_vertigo", UtilityType.FLASH, StratSide.T,
