@@ -75,6 +75,44 @@ public class UtilityLineupEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    // CSNADES.GG Enhanced Specification Fields
+    @Column(name = "from_callout", length = 64)
+    private String fromCallout;
+
+    @Column(name = "to_callout", length = 64)
+    private String toCallout;
+
+    @Builder.Default
+    @Column(name = "movement", length = 32)
+    private String movement = "Stationary";
+
+    @Builder.Default
+    @Column(name = "technique", length = 32)
+    private String technique = "Left Click";
+
+    @Builder.Default
+    @Column(name = "precision", length = 32)
+    private String precision = "Precise";
+
+    @Builder.Default
+    @Column(name = "difficulty", length = 32)
+    private String difficulty = "Medium";
+
+    @Builder.Default
+    @Column(name = "is_pro")
+    private Boolean isPro = false;
+
+    @Builder.Default
+    @Column(name = "views_count")
+    private Integer viewsCount = 1200;
+
+    @Column(name = "setpos_command", length = 256)
+    private String setposCommand;
+
+    @Builder.Default
+    @Column(name = "air_time_seconds")
+    private Double airTimeSeconds = 4.5;
+
     @PrePersist
     public void onPrePersist() {
         if (this.id == null) {
@@ -85,6 +123,27 @@ public class UtilityLineupEntity {
         }
         if (this.isVerified == null) {
             this.isVerified = true;
+        }
+        if (this.movement == null) {
+            this.movement = "Stationary";
+        }
+        if (this.technique == null) {
+            this.technique = "Left Click";
+        }
+        if (this.precision == null) {
+            this.precision = "Precise";
+        }
+        if (this.difficulty == null) {
+            this.difficulty = "Medium";
+        }
+        if (this.isPro == null) {
+            this.isPro = false;
+        }
+        if (this.viewsCount == null) {
+            this.viewsCount = 1200;
+        }
+        if (this.airTimeSeconds == null) {
+            this.airTimeSeconds = 4.5;
         }
     }
 }
