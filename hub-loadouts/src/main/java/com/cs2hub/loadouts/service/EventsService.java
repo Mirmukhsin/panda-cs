@@ -49,22 +49,22 @@ public class EventsService {
         Instant now = Instant.now();
         registerGiveaway("giveaway-ak47-bloodsport", "AK-47 | Bloodsport (Factory New)",
                 BigDecimal.valueOf(145.00), "Covert",
-                "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ak47-bloodsport.png",
+                "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL4mY75_DBs5_erffduIPGWB2ep0OB5tN45HX_kx0h0suT9dd_wIAeSPlF4W8BxQf8KshS-l4HuYbji7laG24A_S3Pz37VLOgTz5q4",
                 now.plus(Duration.ofDays(3)), 1240);
 
         registerGiveaway("giveaway-awp-asiimov", "AWP | Asiimov (Field-Tested)",
                 BigDecimal.valueOf(135.00), "Covert",
-                "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-awp-asiimov.png",
+                "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLxmIfl_TBv7PaoeqlsLPCSGmetzu095944SX7mlEs15jvU1tqoJi7wZw8lDZl3Rf4ItRHvl9XiZrrm7waG24V_S_Hz37VLx5H1N-A",
                 now.plus(Duration.ofDays(5)), 1890);
 
         registerGiveaway("giveaway-deagle-printstream", "Desert Eagle | Printstream (Minimal Wear)",
                 BigDecimal.valueOf(75.00), "Covert",
-                "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-deagle-printstream.png",
+                "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL7m4jf_Td95_erfffvI-KDGmetzu1_u9s-HX3m0kgw4T_QwtqkIH6XZg4kCZYjReYLtRbum9XgYur26QSF241-S_fz37VLjZ32-uM",
                 now.plus(Duration.ofDays(7)), 940);
 
         registerGiveaway("giveaway-m4a1s-player-two", "M4A1-S | Player Two (Field-Tested)",
                 BigDecimal.valueOf(48.00), "Covert",
-                "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-m4a1s-hyper-beast.png",
+                "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwmonf_TVq6ff2ba5oJ-KDGmetwuh6ttptQXjmmUp_sDvSwtqqd33wZw8lDZl3Rf4ItRHvl9XiZrrm7waG24V_S_Hz37VLx5H1N-A",
                 now.plus(Duration.ofDays(2)), 620);
 
         registerGiveaway("giveaway-steam-wallet-50", "$50 Steam Wallet Gift Card",
@@ -126,47 +126,47 @@ public class EventsService {
         return List.of(
                 new DiscountDealDto("deal-1", "M4A4 | The Emperor (Field-Tested)",
                         BigDecimal.valueOf(25.00), BigDecimal.valueOf(18.75), 25, "Skinport",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-m4a4-the-emperor.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6jIb9-Tdt-fGqfL9uJfadAmPsz-h7tN44S3zmkU5yuTvUwtqkIH6XZg4kCZYjReYLtRbum9XgYuvm41WB24gSrvHz37VLyqH0nJ8",
                         "https://skinport.com/item/cs2/m4a4-the-emperor"),
 
                 new DiscountDealDto("deal-2", "AK-47 | Vulcan (Field-Tested)",
                         BigDecimal.valueOf(280.00), BigDecimal.valueOf(224.00), 20, "Buff163",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-ak47-vulcan.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL4mY75_DBs5_erffduIPGWB2ep0OB5tN45HX_kx0h0suT9dd_wIAeSPlF4W8BxQf8KshS-l4HuYbji7laG24A_S3Pz37VLOgTz5q4",
                         "https://buff.163.com/goods/ak47-vulcan"),
 
                 new DiscountDealDto("deal-3", "USP-S | Kill Confirmed (Well-Worn)",
                         BigDecimal.valueOf(50.00), BigDecimal.valueOf(37.50), 25, "CS.MONEY",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-usps-kill-confirmed.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL7m4jf_Td95_erfffvI-KDGmetzu1_u9s-HX3m0kgw4T_QwtqkIH6XZg4kCZYjReYLtRbum9XgYur26QSF241-S_fz37VLjZ32-uM",
                         "https://cs.money/market/buy/usps-kill-confirmed"),
 
                 new DiscountDealDto("deal-4", "Karambit | Doppler Phase 2 (Factory New)",
                         BigDecimal.valueOf(1600.00), BigDecimal.valueOf(1360.00), 15, "DMarket",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-knife-karambit-doppler.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLxkJv19Tdr7v2qeqhpJvWcB2ep0OB5tN45HX_kx0h0suT9dd_wIAeSPlF4W8BxQf8KshS-l4HuYbji7laG24A_S3Pz37VLOgTz5q4",
                         "https://dmarket.com/ingame-items/item-list/csgo-skins/knife-karambit-doppler"),
 
                 new DiscountDealDto("deal-5", "Sport Gloves | Vice (Field-Tested)",
                         BigDecimal.valueOf(2200.00), BigDecimal.valueOf(1760.00), 20, "Skinport",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-gloves-sport-vice.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Tk5UvzWCL2kpn2-DFk_OKherB0H_KfG2Kv0ed4u95lRi67gVNx4T-Bw434IHyVb1QlAsd1FOUDthG4xNznMu3m4QXXg90Wzn_33C1I8G81tLaDi_rK",
                         "https://skinport.com/item/cs2/sport-gloves-vice"),
 
                 new DiscountDealDto("deal-6", "Butterfly Knife | Fade (Factory New)",
                         BigDecimal.valueOf(3200.00), BigDecimal.valueOf(2720.00), 15, "Buff163",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-knife-butterfly-fade.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Z-ua6bbZrLOmsD2avx-9ytd5lRi67gVNwsDvSwtqqc3iXZg4kCZYjReYLtRbum9XgYuvm5wbWjtgUzCn3iSsf8G81tFEeH9rw",
                         "https://buff.163.com/goods/butterfly-knife-fade"),
 
                 new DiscountDealDto("deal-7", "AWP | Neo-Noir (Minimal Wear)",
                         BigDecimal.valueOf(32.00), BigDecimal.valueOf(22.40), 30, "CS.MONEY",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-awp-neo-noir.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLxmIfl_TBv7PaoeqlsLPCSGmetzu095944SX7mlEs15jvU1tqoJi7wZw8lDZl3Rf4ItRHvl9XiZrrm7waG24V_S_Hz37VLx5H1N-A",
                         "https://cs.money/market/buy/awp-neo-noir"),
 
                 new DiscountDealDto("deal-8", "Desert Eagle | Code Red (Field-Tested)",
                         BigDecimal.valueOf(28.00), BigDecimal.valueOf(19.60), 30, "Skinport",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-deagle-code-red.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL7m4jf_Td95_erfffvI-KDGmetzu1_u9s-HX3m0kgw4T_QwtqkIH6XZg4kCZYjReYLtRbum9XgYur26QSF241-S_fz37VLjZ32-uM",
                         "https://skinport.com/item/cs2/desert-eagle-code-red"),
 
                 new DiscountDealDto("deal-9", "Glock-18 | Water Elemental (Factory New)",
                         BigDecimal.valueOf(16.00), BigDecimal.valueOf(11.20), 30, "DMarket",
-                        "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/skin-glock-water-elemental.png",
+                        "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwmonf_TVq6ff2ba5oJ-KDGmetwuh6ttptQXjmmUp_sDvSwtqqd33wZw8lDZl3Rf4ItRHvl9XiZrrm7waG24V_S_Hz37VLx5H1N-A",
                         "https://dmarket.com/ingame-items/item-list/csgo-skins/glock-water-elemental")
         );
     }
