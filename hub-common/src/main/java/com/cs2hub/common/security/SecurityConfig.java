@@ -55,7 +55,9 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedEntryPoint()))
                 .authorizeHttpRequests(auth -> auth
                         // Health and monitoring
-                        .requestMatchers("/api/v1/health/**").permitAll()
+                        .requestMatchers("/api/v1/health/**", "/actuator/**").permitAll()
+                        // Catalog endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**").permitAll()
                         // Authentication endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         // OpenAPI / Swagger UI
